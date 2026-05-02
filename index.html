@@ -424,6 +424,151 @@
       footer { flex-direction: column; gap: 1rem; text-align: center; padding: 2rem 1.5rem; }
     }
   </style>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+  <style>
+    /* ── SCROLL REVEAL ── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(36px);
+      transition: opacity .7s cubic-bezier(.22,1,.36,1), transform .7s cubic-bezier(.22,1,.36,1);
+    }
+    .reveal.visible { opacity: 1; transform: none; }
+    .reveal-delay-1 { transition-delay: .1s; }
+    .reveal-delay-2 { transition-delay: .2s; }
+    .reveal-delay-3 { transition-delay: .3s; }
+    .reveal-delay-4 { transition-delay: .4s; }
+    .reveal-delay-5 { transition-delay: .5s; }
+
+    /* ── TIMELINE ── */
+    .timeline { position: relative; padding-left: 2.5rem; }
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 1px;
+      background: linear-gradient(to bottom, var(--accent), var(--gold), transparent);
+    }
+    .tl-item {
+      position: relative;
+      margin-bottom: 2.5rem;
+      padding-left: 1.5rem;
+    }
+    .tl-item::before {
+      content: '';
+      position: absolute;
+      left: -2.55rem;
+      top: .45rem;
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--bg);
+      border: 2px solid var(--accent);
+      transition: background .25s, border-color .25s;
+      z-index: 1;
+    }
+    .tl-item:hover::before { background: var(--accent); }
+    .tl-item.gold::before { border-color: var(--gold); }
+    .tl-item.gold:hover::before { background: var(--gold); }
+    .tl-year {
+      font-family: 'DM Mono', monospace;
+      font-size: .65rem;
+      color: var(--accent);
+      letter-spacing: .12em;
+      margin-bottom: .3rem;
+    }
+    .tl-item.gold .tl-year { color: var(--gold); }
+    .tl-heading {
+      font-size: .97rem;
+      font-weight: 500;
+      color: var(--white);
+      margin-bottom: .15rem;
+      line-height: 1.4;
+    }
+    .tl-sub {
+      font-family: 'DM Mono', monospace;
+      font-size: .7rem;
+      color: var(--muted);
+      margin-bottom: .4rem;
+    }
+    .tl-body {
+      font-size: .85rem;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    /* ── TIMELINE TABS ── */
+    .tl-tabs {
+      display: flex;
+      gap: .5rem;
+      margin-bottom: 2.5rem;
+    }
+    .tl-tab {
+      padding: .4rem 1.2rem;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      font-family: 'DM Mono', monospace;
+      font-size: .7rem;
+      letter-spacing: .08em;
+      color: var(--muted);
+      cursor: pointer;
+      background: none;
+      transition: all .2s;
+    }
+    .tl-tab.active, .tl-tab:hover {
+      border-color: var(--accent);
+      color: var(--accent2);
+      background: rgba(74,158,255,.08);
+    }
+    .tl-pane { display: none; }
+    .tl-pane.active { display: block; }
+
+    /* ── KEYWORD NETWORK ── */
+    #research { background: var(--bg2); }
+    #network-section { background: var(--bg); }
+    #network-wrap {
+      width: 100%;
+      height: 480px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      position: relative;
+      background: radial-gradient(ellipse at 50% 50%, rgba(74,158,255,.04) 0%, transparent 70%);
+    }
+    #network-wrap svg { width: 100%; height: 100%; }
+    .node-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      fill: var(--text);
+      pointer-events: none;
+      text-anchor: middle;
+    }
+    .network-legend {
+      display: flex;
+      gap: 1.5rem;
+      margin-top: 1.2rem;
+      flex-wrap: wrap;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      font-family: 'DM Mono', monospace;
+      font-size: .68rem;
+      color: var(--muted);
+    }
+    .legend-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .network-hint {
+      font-family: 'DM Mono', monospace;
+      font-size: .68rem;
+      color: var(--muted);
+      margin-bottom: 1rem;
+      letter-spacing: .05em;
+    }
+  </style>
 </head>
 <body>
 
@@ -433,6 +578,7 @@
     <li><a href="#about">About</a></li>
     <li><a href="#experience">Experience</a></li>
     <li><a href="#publications">Research</a></li>
+    <li><a href="#network-section">Keywords</a></li>
     
   </ul>
 </nav>
@@ -465,13 +611,13 @@
 
 <!-- ABOUT -->
 <section id="about">
-  <div class="section-header">
+  <div class="section-header reveal">
     <span class="section-num">01 —</span>
     <h2 class="section-title">About</h2>
     <div class="section-line"></div>
   </div>
   <div class="about-grid">
-    <div class="about-text">
+    <div class="about-text reveal">
       <p>
         I started as a student of public administration — drawn to the question of how societies organize themselves, resolve conflict, and make collective decisions under uncertainty. The more I studied, the more I noticed something striking: <strong style="color:var(--accent2)">social phenomena follow patterns disturbingly similar to natural ones</strong>. Public conflicts cascade like physical systems. Policy adoption curves mirror epidemic spread. Risk perception behaves like a force with its own inertia.
       </p>
@@ -488,7 +634,7 @@
         My research philosophy is rooted in that same conviction: social science deserves better infrastructure. Too much insight is buried in fragmented literature, lost between disciplines, or inaccessible to researchers without deep technical training. That gap is what Galpi.AI is designed to close — a research assistant built not just to retrieve information, but to think in the logic of policy analysis and social inquiry.
       </p>
     </div>
-    <div class="about-sidebar">
+    <div class="about-sidebar reveal reveal-delay-2">
       <div class="sidebar-item">
         <div class="sidebar-label">Education</div>
         <div class="sidebar-value">MPA Candidate<br>Sungkyunkwan University<br>Graduate School of Governance</div>
@@ -507,58 +653,53 @@
 
 <!-- EXPERIENCE -->
 <section id="experience">
-  <div class="section-header">
+  <div class="section-header reveal">
     <span class="section-num">02 —</span>
     <h2 class="section-title">Experience</h2>
     <div class="section-line"></div>
   </div>
-  <div class="exp-grid">
-    <div class="exp-card">
-      <div class="exp-period">2024<br>Jan–Dec</div>
-      <div>
-        <div class="exp-title">Undergraduate Researcher</div>
-        <div class="exp-org">Center for Social Conflict Research · Ajou University</div>
-        <ul class="exp-desc">
-          <li>Socio-technical research on nuclear waste management supported by KORAD</li>
-          <li>Analyzed multifaceted approaches to resolving complex public conflicts</li>
-          <li>Applied SPSS and R for quantitative policy analysis</li>
-        </ul>
+
+  <div class="tl-tabs">
+    <button class="tl-tab active" onclick="switchTab('research-tab', this)">Research</button>
+    <button class="tl-tab" onclick="switchTab('work-tab', this)">Work & Policy</button>
+    <button class="tl-tab" onclick="switchTab('vol-tab', this)">Volunteer</button>
+  </div>
+
+  <div id="research-tab" class="tl-pane active">
+    <div class="timeline">
+      <div class="tl-item reveal">
+        <div class="tl-year">2024 · Jan — Dec</div>
+        <div class="tl-heading">Undergraduate Researcher</div>
+        <div class="tl-sub">Center for Social Conflict Research · Ajou University</div>
+        <div class="tl-body">KORAD-supported socio-technical studies on nuclear waste management. Analyzed multifaceted approaches to resolving complex public conflicts using SPSS and R.</div>
+      </div>
+      <div class="tl-item reveal reveal-delay-1">
+        <div class="tl-year">2024 · Sep</div>
+        <div class="tl-heading">Research Assistant (RA)</div>
+        <div class="tl-sub">Korea Information Society Development Institute (KISDI)</div>
+        <div class="tl-body">Conducted foundational case research for AI Ethics Impact Assessments on AI-based video synthesis services. Systematically categorized qualitative data to identify ethical trends and support AI governance framework development.</div>
       </div>
     </div>
-    <div class="exp-card">
-      <div class="exp-period">2024<br>Sep</div>
-      <div>
-        <div class="exp-title">Research Assistant (RA)</div>
-        <div class="exp-org">Korea Information Society Development Institute (KISDI)</div>
-        <ul class="exp-desc">
-          <li>Conducted foundational case research for AI Ethics Impact Assessments, focusing on AI-based video synthesis services</li>
-          <li>Systematically collected and categorized qualitative data from news media to identify societal implications and ethical trends</li>
-          <li>Derived and organized positive and negative ethical issues by case to support AI governance framework development</li>
-        </ul>
+  </div>
+
+  <div id="work-tab" class="tl-pane">
+    <div class="timeline">
+      <div class="tl-item reveal">
+        <div class="tl-year">2023 · Sep — Dec</div>
+        <div class="tl-heading">Administrative Intern & Team Leader</div>
+        <div class="tl-sub">Suwon City — Youth Participation Group for Policy</div>
+        <div class="tl-body">Supported municipal policy development through the Collegiate Administrative Internship. Conducted comprehensive research on laws, budgets, and case studies; facilitated evidence-based policy formulation via field investigations and expert consultations.</div>
       </div>
     </div>
-    <div class="exp-card">
-      <div class="exp-period">2023<br>Sep–Dec</div>
-      <div>
-        <div class="exp-title">Administrative Intern & Team Leader</div>
-        <div class="exp-org">Suwon City — Youth Participation Group for Policy</div>
-        <ul class="exp-desc">
-          <li>Participated in the 'Collegiate Administrative Internship' to support municipal policy development</li>
-          <li>Conducted comprehensive research on relevant laws, budgets, and domestic/international case studies</li>
-          <li>Facilitated evidence-based policy formulation through field investigations and expert consultations</li>
-        </ul>
-      </div>
-    </div>
-    <div class="exp-card">
-      <div class="exp-period">2020<br>– 2025</div>
-      <div>
-        <div class="exp-title">President (2024–2025)</div>
-        <div class="exp-org">Neulsarang — Campus Education Service Club</div>
-        <ul class="exp-desc">
-          <li>Spearheaded community service initiatives and social contribution projects as organizational head</li>
-          <li>Orchestrated long-term academic support for elementary and middle school students at Myeongryuk Children's Home</li>
-          <li>Designed and executed interactive learning programs and special holiday events to enhance social integration</li>
-        </ul>
+  </div>
+
+  <div id="vol-tab" class="tl-pane">
+    <div class="timeline">
+      <div class="tl-item gold reveal">
+        <div class="tl-year">2020 — 2025 · President (2024–2025)</div>
+        <div class="tl-heading">Neulsarang — Campus Education Service Club</div>
+        <div class="tl-sub">5 years 10 months</div>
+        <div class="tl-body">Led community service initiatives as organizational head. Orchestrated long-term academic mentoring for students at Myeongryuk Children's Home, and designed interactive learning programs to enhance social integration.</div>
       </div>
     </div>
   </div>
@@ -566,41 +707,41 @@
 
 <!-- PUBLICATIONS -->
 <section id="publications">
-  <div class="section-header">
+  <div class="section-header reveal">
     <span class="section-num">03 —</span>
     <h2 class="section-title">Research & Publications</h2>
     <div class="section-line"></div>
   </div>
   <div class="pub-list">
-    <div class="pub-item">
+    <div class="pub-item reveal">
       <span class="pub-type journal">Journal</span>
       <div>
         <div class="pub-title">Analyzing Factors Affecting the Acceptability of High-Level Radioactive Waste Repositories: Focusing on the Risk Perception of Fukushima Contaminated Water within the VBN Model</div>
         <div class="pub-venue">Public Policy Review (formerly Legal &amp; Political Review), Vol. 41, No. 3 · December 2024</div>
       </div>
     </div>
-    <div class="pub-item">
+    <div class="pub-item reveal">
       <span class="pub-type conference">Conference</span>
       <div>
         <div class="pub-title">Trends and Systematic Literature Review of Nuclear Energy Acceptability Research in South Korea: Focusing on Public Administration and Policy Journals (2000–2025)</div>
         <div class="pub-venue">2026 Spring Conference · Korean Association for Policy Analysis and Evaluation (KAPAE) · April 2026</div>
       </div>
     </div>
-    <div class="pub-item">
+    <div class="pub-item reveal">
       <span class="pub-type conference">Conference</span>
       <div>
         <div class="pub-title">Discussions on Policies for Undocumented Migrant Children for Social Integration: Focusing on the Multiple Streams Framework (MSF)</div>
         <div class="pub-venue">Korean Association of Immigration Policy Summer Conference · June 2025 [Oral Presentation]</div>
       </div>
     </div>
-    <div class="pub-item">
+    <div class="pub-item reveal">
       <span class="pub-type conference">Conference</span>
       <div>
         <div class="pub-title">The Effect of Residents' Right to Self-Determination on Responsive Behavior in Selecting Sites for Radioactive Waste Disposal Facilities: Analysis of the Moderating Effect of Social Capital</div>
         <div class="pub-venue">Korean Radioactive Waste Society Autumn Conference · October 2024 [Poster]</div>
       </div>
     </div>
-    <div class="pub-item">
+    <div class="pub-item reveal">
       <span class="pub-type conference">Conference</span>
       <div>
         <div class="pub-title">A Comparative Study of Hydrogen Energy Policy Aspects in the Era of Carbon Neutrality: Focusing on Suwon, Yongin, and Hwaseong Cities</div>
@@ -612,6 +753,24 @@
 
 
 
+
+<!-- KEYWORD NETWORK -->
+<section id="network-section">
+  <div class="section-header reveal">
+    <span class="section-num">04 —</span>
+    <h2 class="section-title">Research Keywords</h2>
+    <div class="section-line"></div>
+  </div>
+  <p class="network-hint">// drag nodes · hover to highlight connections</p>
+  <div id="network-wrap"><svg id="network-svg"></svg></div>
+  <div class="network-legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#4a9eff"></div>Core Theory</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#c9a96e"></div>Policy Domain</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#6ee7c9"></div>Method</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#e07ab0"></div>Emerging Interest</div>
+  </div>
+</section>
+
 <footer>
   <div class="footer-name">Jihwan Oh — Portfolio</div>
   <div class="footer-links">
@@ -620,6 +779,162 @@
     <a href="https://linkedin.com/in/yourprofile" target="_blank">LinkedIn</a>
   </div>
 </footer>
+
+
+<script>
+// ── SCROLL REVEAL ──
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach((e, i) => {
+    if (e.isIntersecting) {
+      e.target.classList.add('visible');
+      observer.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.12 });
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+// ── TIMELINE TABS ──
+function switchTab(id, btn) {
+  document.querySelectorAll('.tl-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tl-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+  // re-trigger reveal for newly visible items
+  document.querySelectorAll('#' + id + ' .reveal').forEach(el => {
+    el.classList.remove('visible');
+    setTimeout(() => observer.observe(el), 10);
+  });
+}
+
+// ── KEYWORD NETWORK ──
+const nodes = [
+  { id: 'Public Administration', group: 'core', r: 22 },
+  { id: 'Risk Perception', group: 'core', r: 19 },
+  { id: 'Governance', group: 'core', r: 18 },
+  { id: 'Sociotechnical Systems', group: 'core', r: 16 },
+  { id: 'Normal Accident Theory', group: 'emerging', r: 15 },
+  { id: 'Nuclear Energy Policy', group: 'policy', r: 18 },
+  { id: 'AI Ethics', group: 'emerging', r: 17 },
+  { id: 'VBN Model', group: 'method', r: 14 },
+  { id: 'Multiple Streams Framework', group: 'method', r: 14 },
+  { id: 'Social Capital', group: 'core', r: 14 },
+  { id: 'Public Conflict', group: 'policy', r: 15 },
+  { id: 'Immigration Policy', group: 'policy', r: 13 },
+  { id: 'Disaster Management', group: 'emerging', r: 15 },
+  { id: 'Carbon Neutrality', group: 'policy', r: 13 },
+  { id: 'Systematic Literature Review', group: 'method', r: 14 },
+  { id: 'Policy Acceptability', group: 'policy', r: 15 },
+];
+
+const links = [
+  { source: 'Public Administration', target: 'Risk Perception' },
+  { source: 'Public Administration', target: 'Governance' },
+  { source: 'Public Administration', target: 'Public Conflict' },
+  { source: 'Public Administration', target: 'Policy Acceptability' },
+  { source: 'Risk Perception', target: 'Nuclear Energy Policy' },
+  { source: 'Risk Perception', target: 'VBN Model' },
+  { source: 'Risk Perception', target: 'Policy Acceptability' },
+  { source: 'Nuclear Energy Policy', target: 'VBN Model' },
+  { source: 'Nuclear Energy Policy', target: 'Social Capital' },
+  { source: 'Nuclear Energy Policy', target: 'Public Conflict' },
+  { source: 'Nuclear Energy Policy', target: 'Systematic Literature Review' },
+  { source: 'Nuclear Energy Policy', target: 'Policy Acceptability' },
+  { source: 'Governance', target: 'AI Ethics' },
+  { source: 'Governance', target: 'Sociotechnical Systems' },
+  { source: 'Governance', target: 'Disaster Management' },
+  { source: 'AI Ethics', target: 'Sociotechnical Systems' },
+  { source: 'AI Ethics', target: 'Normal Accident Theory' },
+  { source: 'Disaster Management', target: 'Normal Accident Theory' },
+  { source: 'Disaster Management', target: 'Sociotechnical Systems' },
+  { source: 'Multiple Streams Framework', target: 'Immigration Policy' },
+  { source: 'Multiple Streams Framework', target: 'Public Administration' },
+  { source: 'Social Capital', target: 'Public Conflict' },
+  { source: 'Carbon Neutrality', target: 'Policy Acceptability' },
+  { source: 'Carbon Neutrality', target: 'Public Administration' },
+];
+
+const colorMap = {
+  core: '#4a9eff',
+  policy: '#c9a96e',
+  method: '#6ee7c9',
+  emerging: '#e07ab0'
+};
+
+function initNetwork() {
+  const wrap = document.getElementById('network-wrap');
+  const W = wrap.clientWidth, H = wrap.clientHeight;
+  const svg = d3.select('#network-svg')
+    .attr('viewBox', `0 0 ${W} ${H}`);
+
+  svg.append('defs').append('filter').attr('id','glow')
+    .append('feGaussianBlur').attr('stdDeviation','3').attr('result','blur')
+    .select(function() { return this.parentNode; })
+    .append('feMerge').selectAll('feMergeNode')
+    .data(['blur','SourceGraphic']).enter().append('feMergeNode')
+    .attr('in', d => d);
+
+  const sim = d3.forceSimulation(nodes)
+    .force('link', d3.forceLink(links).id(d => d.id).distance(90).strength(.6))
+    .force('charge', d3.forceManyBody().strength(-280))
+    .force('center', d3.forceCenter(W/2, H/2))
+    .force('collision', d3.forceCollide(d => d.r + 18));
+
+  const link = svg.append('g').selectAll('line')
+    .data(links).enter().append('line')
+    .attr('stroke', 'rgba(74,158,255,.18)')
+    .attr('stroke-width', 1.2);
+
+  const node = svg.append('g').selectAll('g')
+    .data(nodes).enter().append('g')
+    .call(d3.drag()
+      .on('start', (e,d) => { if (!e.active) sim.alphaTarget(.3).restart(); d.fx=d.x; d.fy=d.y; })
+      .on('drag',  (e,d) => { d.fx=e.x; d.fy=e.y; })
+      .on('end',   (e,d) => { if (!e.active) sim.alphaTarget(0); d.fx=null; d.fy=null; }));
+
+  node.append('circle')
+    .attr('r', d => d.r)
+    .attr('fill', d => colorMap[d.group] + '22')
+    .attr('stroke', d => colorMap[d.group])
+    .attr('stroke-width', 1.5)
+    .style('cursor', 'grab');
+
+  node.append('text')
+    .attr('class', 'node-label')
+    .attr('dy', d => d.r + 13)
+    .text(d => d.id)
+    .attr('fill', '#6b7f93')
+    .attr('font-size', '10px');
+
+  // Hover highlight
+  node.on('mouseover', (e, d) => {
+    const connected = new Set(links.filter(l => l.source.id===d.id || l.target.id===d.id)
+      .flatMap(l => [l.source.id, l.target.id]));
+    node.selectAll('circle').attr('opacity', n => connected.has(n.id) ? 1 : .15);
+    node.selectAll('text').attr('opacity', n => connected.has(n.id) ? 1 : .1);
+    link.attr('opacity', l => l.source.id===d.id || l.target.id===d.id ? 1 : .05)
+        .attr('stroke', l => l.source.id===d.id || l.target.id===d.id ? colorMap[d.group] : 'rgba(74,158,255,.18)')
+        .attr('stroke-width', l => l.source.id===d.id || l.target.id===d.id ? 2 : 1.2);
+  }).on('mouseout', () => {
+    node.selectAll('circle').attr('opacity', 1);
+    node.selectAll('text').attr('opacity', 1);
+    link.attr('opacity', 1).attr('stroke', 'rgba(74,158,255,.18)').attr('stroke-width', 1.2);
+  });
+
+  sim.on('tick', () => {
+    link
+      .attr('x1', d => d.source.x).attr('y1', d => d.source.y)
+      .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
+    node.attr('transform', d => `translate(${
+      Math.max(d.r, Math.min(W-d.r, d.x))},${Math.max(d.r, Math.min(H-d.r, d.y))})`);
+  });
+}
+
+// Init network when it enters viewport
+const netObserver = new IntersectionObserver(entries => {
+  if (entries[0].isIntersecting) { initNetwork(); netObserver.disconnect(); }
+}, { threshold: 0.1 });
+netObserver.observe(document.getElementById('network-section'));
+</script>
 
 </body>
 </html>
