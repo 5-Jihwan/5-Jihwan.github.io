@@ -413,15 +413,23 @@
 
     /* ── RESPONSIVE ── */
     @media (max-width: 900px) {
-      nav { padding: 1rem 1.5rem; }
-      nav ul { gap: 1.5rem; }
+      nav { padding: 1rem 1.5rem; flex-wrap: wrap; gap: .4rem 1rem; }
+      nav ul { gap: 1.1rem; flex-wrap: wrap; justify-content: flex-end; }
+      nav ul a { font-size: .72rem; }
       #hero { grid-template-columns: 1fr; padding: 6rem 1.5rem 3rem; gap: 3rem; }
+      #hero.page.active { display: flex; flex-direction: column; }
       .hero-photo-col { order: -1; }
       .photo-frame { width: 180px; }
       section { padding: 4rem 1.5rem; }
+      section.page { padding-top: 7rem; }
       .about-grid { grid-template-columns: 1fr; gap: 2.5rem; }
       .about-sidebar { border-left: none; border-top: 1px solid var(--border); padding-left: 0; padding-top: 2rem; }
-      footer { flex-direction: column; gap: 1rem; text-align: center; padding: 2rem 1.5rem; }
+    }
+    @media (max-width: 560px) {
+      nav .logo { font-size: .72rem; }
+      nav ul { gap: .8rem; }
+      nav ul a { font-size: .66rem; letter-spacing: .05em; }
+      #network-wrap { height: 380px; }
     }
   </style>
 
@@ -568,23 +576,87 @@
       margin-bottom: 1rem;
       letter-spacing: .05em;
     }
+
+    /* ── PAGE ROUTER ── */
+    section.page, #hero.page { display: none; }
+    #hero.page.active { display: grid; }
+    section.page.active { display: block; }
+    .page { min-height: 100vh; animation: pageIn .55s cubic-bezier(.22,1,.36,1); }
+    section.page { padding-top: 7.5rem; }
+    @keyframes pageIn {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: none; }
+    }
+    nav .logo { text-decoration: none; white-space: nowrap; flex-shrink: 0; transition: transform .12s ease-out; }
+    nav ul a { display: inline-block; }
+    nav ul a.nav-active { color: var(--accent2); }
+    nav ul a.nav-active::after {
+      content: ''; display: block; height: 1px; margin-top: 3px;
+      background: linear-gradient(to right, var(--accent), transparent);
+    }
+
+    /* ── HERO CANVAS ── */
+    #hero-canvas {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      z-index: 0; pointer-events: none;
+    }
+    .hero-text, .hero-photo-col { z-index: 1; }
+
+    /* ── 3D TILT ── */
+    .exp-grid, .pub-list, .timeline { perspective: 1000px; }
+    .exp-card, .pub-item { will-change: transform; transform-style: preserve-3d; }
+    .tl-item { will-change: transform; transform-style: preserve-3d; transition: transform .15s ease-out; }
+
+    /* ── CONTACT PAGE ── */
+    #contact { background: var(--bg2); }
+    .contact-wrap { max-width: 680px; }
+    .contact-lead {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.6rem; font-weight: 300; font-style: italic;
+      color: var(--white); line-height: 1.5; margin-bottom: 3rem;
+    }
+    .contact-lead span { color: var(--gold); }
+    .contact-links { display: flex; flex-direction: column; gap: 1rem; }
+    .contact-links a {
+      display: inline-flex; align-items: center; gap: 1.2rem;
+      font-family: 'DM Mono', monospace; font-size: .82rem; letter-spacing: .04em;
+      color: var(--text); text-decoration: none;
+      border: 1px solid var(--border); border-radius: 6px;
+      padding: 1rem 1.5rem; width: fit-content;
+      transition: border-color .25s, color .25s, transform .12s ease-out;
+      background: var(--card);
+    }
+    .contact-links a:hover { border-color: var(--accent); color: var(--accent2); }
+    .contact-links .ci-label {
+      color: var(--accent); min-width: 95px;
+      text-transform: uppercase; font-size: .68rem; letter-spacing: .12em;
+    }
+    .contact-foot {
+      margin-top: 4rem; padding-top: 2rem;
+      border-top: 1px solid var(--border);
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.1rem; color: var(--muted);
+    }
   </style>
 </head>
 <body>
 
 <nav>
-  <div class="logo">// Jihwan Oh</div>
+  <a class="logo" href="#hero" data-page="hero">// Jihwan Oh</a>
   <ul>
-    <li><a href="#about">About</a></li>
-    <li><a href="#experience">Experience</a></li>
-    <li><a href="#publications">Research</a></li>
-    <li><a href="#network-section">Keywords</a></li>
-    
+    <li><a href="#hero" data-page="hero">Home</a></li>
+    <li><a href="#about" data-page="about">About</a></li>
+    <li><a href="#experience" data-page="experience">Experience</a></li>
+    <li><a href="#publications" data-page="publications">Research</a></li>
+    <li><a href="#network-section" data-page="network-section">Keywords</a></li>
+    <li><a href="#contact" data-page="contact">Contact</a></li>
   </ul>
 </nav>
 
 <!-- HERO -->
-<section id="hero">
+<section id="hero" class="page active">
+  <canvas id="hero-canvas"></canvas>
   <div class="hero-bg-line"></div>
   <div class="hero-text">
     <div class="hero-eyebrow">MPA Student · Researcher · Engineer</div>
@@ -610,7 +682,7 @@
 </section>
 
 <!-- ABOUT -->
-<section id="about">
+<section id="about" class="page">
   <div class="section-header reveal">
     <span class="section-num">01 —</span>
     <h2 class="section-title">About</h2>
@@ -652,7 +724,7 @@
 </section>
 
 <!-- EXPERIENCE -->
-<section id="experience">
+<section id="experience" class="page">
   <div class="section-header reveal">
     <span class="section-num">02 —</span>
     <h2 class="section-title">Experience</h2>
@@ -706,7 +778,7 @@
 </section>
 
 <!-- PUBLICATIONS -->
-<section id="publications">
+<section id="publications" class="page">
   <div class="section-header reveal">
     <span class="section-num">03 —</span>
     <h2 class="section-title">Research & Publications</h2>
@@ -755,7 +827,7 @@
 
 
 <!-- KEYWORD NETWORK -->
-<section id="network-section">
+<section id="network-section" class="page">
   <div class="section-header reveal">
     <span class="section-num">04 —</span>
     <h2 class="section-title">Research Keywords</h2>
@@ -771,14 +843,25 @@
   </div>
 </section>
 
-<footer>
-  <div class="footer-name">Jihwan Oh — Portfolio</div>
-  <div class="footer-links">
-    <a href="mailto:ojh121523@skku.edu">Email</a>
-    <a href="https://github.com/yourusername" target="_blank">GitHub</a>
-    <a href="https://linkedin.com/in/yourprofile" target="_blank">LinkedIn</a>
+<!-- CONTACT -->
+<section id="contact" class="page">
+  <div class="section-header reveal">
+    <span class="section-num">05 —</span>
+    <h2 class="section-title">Contact</h2>
+    <div class="section-line"></div>
   </div>
-</footer>
+  <div class="contact-wrap">
+    <p class="contact-lead reveal">
+      Always open to conversations on <span>risk governance</span>, sociotechnical systems, and evidence-based policy — or anything that treats social complexity with the rigor it deserves.
+    </p>
+    <div class="contact-links reveal reveal-delay-1">
+      <a href="mailto:ojh121523@skku.edu"><span class="ci-label">Email</span> ojh121523@skku.edu</a>
+      <a href="https://github.com/5-jihwan" target="_blank" rel="noopener"><span class="ci-label">GitHub</span> github.com/5-jihwan</a>
+      <a href="https://www.linkedin.com/in/jihwan-oh-ma" target="_blank" rel="noopener"><span class="ci-label">LinkedIn</span> linkedin.com/in/jihwan-oh-ma</a>
+    </div>
+    <div class="contact-foot reveal reveal-delay-2">Jihwan Oh — Researcher &amp; Engineer</div>
+  </div>
+</section>
 
 
 <script>
@@ -860,7 +943,10 @@ const colorMap = {
   emerging: '#e07ab0'
 };
 
+let netInited = false;
 function initNetwork() {
+  if (netInited) return;
+  netInited = true;
   const wrap = document.getElementById('network-wrap');
   const W = wrap.clientWidth, H = wrap.clientHeight;
   const svg = d3.select('#network-svg')
@@ -929,11 +1015,139 @@ function initNetwork() {
   });
 }
 
-// Init network when it enters viewport
-const netObserver = new IntersectionObserver(entries => {
-  if (entries[0].isIntersecting) { initNetwork(); netObserver.disconnect(); }
-}, { threshold: 0.1 });
-netObserver.observe(document.getElementById('network-section'));
+// ── PAGE ROUTER ──
+let heroRAF = null;
+const navLinks = document.querySelectorAll('[data-page]');
+function showPage(id, push) {
+  const target = document.getElementById(id) ? id : 'hero';
+  const el = document.getElementById(target);
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+
+  navLinks.forEach(a => a.classList.toggle('nav-active', a.dataset.page === target && a.tagName === 'A' && a.parentElement.tagName === 'LI'));
+  window.scrollTo({ top: 0 });
+
+  // re-play reveal animations for the page that just appeared
+  el.querySelectorAll('.reveal').forEach(r => r.classList.remove('visible'));
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    el.querySelectorAll('.reveal').forEach(r => r.classList.add('visible'));
+  }));
+
+  if (target === 'network-section') initNetwork();
+  if (target === 'hero') startHero(); else stopHero();
+
+  if (push) history.pushState({ page: target }, '', '#' + target);
+}
+
+navLinks.forEach(a => a.addEventListener('click', e => {
+  e.preventDefault();
+  showPage(a.dataset.page, true);
+}));
+
+window.addEventListener('popstate', e => {
+  showPage((e.state && e.state.page) || (location.hash || '#hero').slice(1), false);
+});
+
+// initial page from URL hash
+showPage((location.hash || '#hero').slice(1), false);
+
+// ── HERO CANVAS — mouse-reactive constellation ──
+function startHero() {
+  const canvas = document.getElementById('hero-canvas');
+  if (!canvas || heroRAF) return;
+  const ctx = canvas.getContext('2d');
+  const hero = document.getElementById('hero');
+  const mouse = { x: -9999, y: -9999 };
+  let dpr = Math.min(window.devicePixelRatio || 1, 2);
+  let W, H, particles;
+
+  function resize() {
+    const r = hero.getBoundingClientRect();
+    W = r.width; H = r.height;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const count = Math.round(Math.min(90, W * H / 14000));
+    particles = Array.from({ length: count }, (_, i) => ({
+      x: Math.random() * W, y: Math.random() * H,
+      vx: (((i * 53 + 17) % 100) / 100 - 0.5) * 0.4,
+      vy: (((i * 31 + 7) % 100) / 100 - 0.5) * 0.4
+    }));
+  }
+  resize();
+  hero._heroResize = resize;
+  window.addEventListener('resize', resize);
+  hero.addEventListener('mousemove', e => {
+    const r = hero.getBoundingClientRect();
+    mouse.x = e.clientX - r.left; mouse.y = e.clientY - r.top;
+  });
+  hero.addEventListener('mouseleave', () => { mouse.x = -9999; mouse.y = -9999; });
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    for (const p of particles) {
+      p.x += p.vx; p.y += p.vy;
+      if (p.x < 0 || p.x > W) p.vx *= -1;
+      if (p.y < 0 || p.y > H) p.vy *= -1;
+      // gentle pull toward cursor
+      const dxm = mouse.x - p.x, dym = mouse.y - p.y;
+      const dm = Math.hypot(dxm, dym);
+      if (dm < 160) { p.x += dxm / dm * 0.5; p.y += dym / dm * 0.5; }
+    }
+    // links between near particles
+    for (let i = 0; i < particles.length; i++) {
+      for (let j = i + 1; j < particles.length; j++) {
+        const a = particles[i], b = particles[j];
+        const d = Math.hypot(a.x - b.x, a.y - b.y);
+        if (d < 120) {
+          ctx.strokeStyle = 'rgba(74,158,255,' + (0.12 * (1 - d / 120)) + ')';
+          ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+        }
+      }
+    }
+    // links to cursor + dots
+    for (const p of particles) {
+      const dc = Math.hypot(mouse.x - p.x, mouse.y - p.y);
+      if (dc < 160) {
+        ctx.strokeStyle = 'rgba(201,169,110,' + (0.28 * (1 - dc / 160)) + ')';
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(mouse.x, mouse.y); ctx.lineTo(p.x, p.y); ctx.stroke();
+      }
+      ctx.fillStyle = 'rgba(168,216,255,.55)';
+      ctx.beginPath(); ctx.arc(p.x, p.y, 1.6, 0, Math.PI * 2); ctx.fill();
+    }
+    heroRAF = requestAnimationFrame(draw);
+  }
+  heroRAF = requestAnimationFrame(draw);
+}
+function stopHero() {
+  if (heroRAF) { cancelAnimationFrame(heroRAF); heroRAF = null; }
+}
+
+// ── 3D TILT on cards ──
+document.querySelectorAll('.exp-card, .pub-item, .tl-item').forEach(card => {
+  card.addEventListener('mousemove', e => {
+    const r = card.getBoundingClientRect();
+    if (!r.width) return;
+    const px = (e.clientX - r.left) / r.width - 0.5;
+    const py = (e.clientY - r.top) / r.height - 0.5;
+    card.style.transform =
+      `perspective(1000px) rotateX(${(-py * 6).toFixed(2)}deg) rotateY(${(px * 6).toFixed(2)}deg) translateZ(8px)`;
+  });
+  card.addEventListener('mouseleave', () => { card.style.transform = ''; });
+});
+
+// ── MAGNETIC buttons ──
+document.querySelectorAll('nav .logo, nav ul a, .tl-tab, .contact-links a').forEach(el => {
+  const strength = el.closest('.contact-links') ? 0.15 : 0.3;
+  el.addEventListener('mousemove', e => {
+    const r = el.getBoundingClientRect();
+    const x = e.clientX - r.left - r.width / 2;
+    const y = e.clientY - r.top - r.height / 2;
+    el.style.transform = `translate(${(x * strength).toFixed(1)}px, ${(y * strength).toFixed(1)}px)`;
+  });
+  el.addEventListener('mouseleave', () => { el.style.transform = ''; });
+});
 </script>
 
 </body>
