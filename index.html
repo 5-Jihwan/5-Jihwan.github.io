@@ -638,6 +638,73 @@
       font-family: 'Cormorant Garamond', serif;
       font-size: 1.1rem; color: var(--muted);
     }
+
+    /* ── CURSOR SPOTLIGHT GLOW ── */
+    #cursor-glow {
+      position: fixed; top: 0; left: 0;
+      width: 600px; height: 600px; border-radius: 50%;
+      pointer-events: none; z-index: 3; opacity: 0;
+      background: radial-gradient(circle, rgba(74,158,255,.10) 0%, rgba(74,158,255,.04) 38%, transparent 68%);
+      transform: translate3d(-9999px, -9999px, 0);
+      will-change: transform; transition: opacity .4s;
+    }
+    @media (max-width: 900px), (pointer: coarse) { #cursor-glow { display: none; } }
+
+    /* ── COMMAND PALETTE ── */
+    .cmdk-trigger {
+      position: fixed; bottom: 1.6rem; right: 1.6rem; z-index: 150;
+      display: inline-flex; align-items: center; gap: .5rem;
+      padding: .55rem .9rem; border-radius: 999px;
+      background: rgba(19,28,40,.85); backdrop-filter: blur(8px);
+      border: 1px solid var(--border); color: var(--muted);
+      font-family: 'DM Mono', monospace; font-size: .7rem; letter-spacing: .08em;
+      cursor: pointer; transition: border-color .2s, color .2s, transform .15s ease-out;
+    }
+    .cmdk-trigger:hover { border-color: var(--accent); color: var(--accent2); }
+    .cmdk-trigger .ck-kbd {
+      padding: .1rem .4rem; border: 1px solid var(--border); border-radius: 4px;
+      font-size: .65rem; color: var(--accent);
+    }
+    .cmdk-overlay {
+      position: fixed; inset: 0; z-index: 200; display: none;
+      align-items: flex-start; justify-content: center;
+      background: rgba(5,8,12,.6); backdrop-filter: blur(6px);
+    }
+    .cmdk-overlay.open { display: flex; }
+    .cmdk-panel {
+      margin-top: 14vh; width: min(540px, 92vw);
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; overflow: hidden;
+      box-shadow: 0 24px 80px rgba(0,0,0,.55);
+      animation: cmdkIn .18s ease-out;
+    }
+    @keyframes cmdkIn {
+      from { opacity: 0; transform: translateY(-8px) scale(.98); }
+      to   { opacity: 1; transform: none; }
+    }
+    .cmdk-input {
+      width: 100%; padding: 1.1rem 1.3rem; background: none; border: none;
+      border-bottom: 1px solid var(--border); color: var(--white);
+      font-family: 'DM Mono', monospace; font-size: .95rem; outline: none;
+    }
+    .cmdk-input::placeholder { color: var(--muted); }
+    .cmdk-list { list-style: none; max-height: 320px; overflow-y: auto; padding: .5rem; }
+    .cmdk-item {
+      display: flex; align-items: center; gap: .9rem;
+      padding: .7rem 1rem; border-radius: 8px; cursor: pointer;
+      color: var(--text); font-size: .9rem;
+    }
+    .cmdk-item .ck-kind {
+      font-family: 'DM Mono', monospace; font-size: .58rem; letter-spacing: .12em;
+      text-transform: uppercase; color: var(--accent); min-width: 60px;
+    }
+    .cmdk-item .ck-sub { margin-left: auto; font-family: 'DM Mono', monospace; font-size: .65rem; color: var(--muted); }
+    .cmdk-item.active, .cmdk-item:hover { background: rgba(74,158,255,.12); }
+    .cmdk-empty { padding: 1.5rem; text-align: center; color: var(--muted); font-family: 'DM Mono', monospace; font-size: .8rem; }
+    .cmdk-foot {
+      display: flex; gap: 1.2rem; padding: .6rem 1.2rem; border-top: 1px solid var(--border);
+      font-family: 'DM Mono', monospace; font-size: .6rem; color: var(--muted); letter-spacing: .08em;
+    }
   </style>
 </head>
 <body>
@@ -863,6 +930,21 @@
   </div>
 </section>
 
+
+<!-- CURSOR SPOTLIGHT -->
+<div id="cursor-glow"></div>
+
+<!-- COMMAND PALETTE -->
+<button id="cmdk-open" class="cmdk-trigger" aria-label="Open command palette">
+  <span class="ck-kbd">⌘K</span> Search
+</button>
+<div id="cmdk" class="cmdk-overlay" aria-hidden="true">
+  <div class="cmdk-panel" role="dialog" aria-modal="true" aria-label="Command palette">
+    <input id="cmdk-input" class="cmdk-input" type="text" placeholder="Jump to a page or link… (try 'contact')" autocomplete="off" spellcheck="false" />
+    <ul id="cmdk-list" class="cmdk-list"></ul>
+    <div class="cmdk-foot"><span>↑ ↓ navigate</span><span>↵ select</span><span>esc close</span></div>
+  </div>
+</div>
 
 <script>
 // ── SCROLL REVEAL ──
@@ -1157,6 +1239,108 @@ document.querySelectorAll('nav .logo, nav ul a, .tl-tab, .contact-links a').forE
   });
   el.addEventListener('mouseleave', () => { el.style.transform = ''; });
 });
+
+// ── CURSOR SPOTLIGHT GLOW ──
+(function(){
+  const glow = document.getElementById('cursor-glow');
+  if (!glow) return;
+  window.addEventListener('mousemove', e => {
+    glow.style.opacity = '1';
+    glow.style.transform = `translate3d(${e.clientX - 300}px, ${e.clientY - 300}px, 0)`;
+  }, { passive: true });
+  document.addEventListener('mouseleave', () => { glow.style.opacity = '0'; });
+})();
+
+// ── COMMAND PALETTE (⌘K) ──
+(function(){
+  const overlay = document.getElementById('cmdk');
+  const input = document.getElementById('cmdk-input');
+  const list = document.getElementById('cmdk-list');
+  const trigger = document.getElementById('cmdk-open');
+  if (!overlay || !input || !list) return;
+
+  const commands = [
+    { kind: 'page', label: 'Home',       sub: '#hero',            run: () => showPage('hero', true) },
+    { kind: 'page', label: 'About',      sub: '#about',           run: () => showPage('about', true) },
+    { kind: 'page', label: 'Experience', sub: '#experience',      run: () => showPage('experience', true) },
+    { kind: 'page', label: 'Research',   sub: '#publications',    run: () => showPage('publications', true) },
+    { kind: 'page', label: 'Keywords',   sub: '#network-section', run: () => showPage('network-section', true) },
+    { kind: 'page', label: 'Contact',    sub: '#contact',         run: () => showPage('contact', true) },
+    { kind: 'link', label: 'Email',      sub: 'ojh121523@skku.edu',          run: () => { location.href = 'mailto:ojh121523@skku.edu'; } },
+    { kind: 'link', label: 'GitHub',     sub: 'github.com/5-Jihwan',         run: () => window.open('https://github.com/5-Jihwan', '_blank', 'noopener') },
+    { kind: 'link', label: 'LinkedIn',   sub: 'linkedin.com/in/jihwan-oh-ma', run: () => window.open('https://www.linkedin.com/in/jihwan-oh-ma', '_blank', 'noopener') },
+  ];
+
+  let filtered = commands.slice();
+  let active = 0;
+
+  function render() {
+    list.innerHTML = '';
+    if (!filtered.length) {
+      list.innerHTML = '<li class="cmdk-empty">No matches</li>';
+      return;
+    }
+    filtered.forEach((c, i) => {
+      const li = document.createElement('li');
+      li.className = 'cmdk-item' + (i === active ? ' active' : '');
+      li.innerHTML = `<span class="ck-kind">${c.kind}</span><span>${c.label}</span><span class="ck-sub">${c.sub}</span>`;
+      li.addEventListener('mouseenter', () => { active = i; paintActive(); });
+      li.addEventListener('click', () => exec(i));
+      list.appendChild(li);
+    });
+  }
+  function paintActive() {
+    [...list.children].forEach((li, i) => li.classList.toggle('active', i === active));
+    const el = list.children[active];
+    if (el && el.scrollIntoView) el.scrollIntoView({ block: 'nearest' });
+  }
+  function filter(q) {
+    q = q.trim().toLowerCase();
+    filtered = q ? commands.filter(c => (c.label + ' ' + c.sub + ' ' + c.kind).toLowerCase().includes(q)) : commands.slice();
+    active = 0;
+    render();
+  }
+  function open() {
+    overlay.classList.add('open');
+    overlay.setAttribute('aria-hidden', 'false');
+    input.value = '';
+    filter('');
+    setTimeout(() => input.focus(), 20);
+  }
+  function close() {
+    overlay.classList.remove('open');
+    overlay.setAttribute('aria-hidden', 'true');
+  }
+  function exec(i) {
+    const c = filtered[i];
+    if (!c) return;
+    close();
+    c.run();
+  }
+
+  input.addEventListener('input', () => filter(input.value));
+  input.addEventListener('keydown', e => {
+    if (e.key === 'ArrowDown') { e.preventDefault(); active = Math.min(active + 1, filtered.length - 1); paintActive(); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); active = Math.max(active - 1, 0); paintActive(); }
+    else if (e.key === 'Enter') { e.preventDefault(); exec(active); }
+    else if (e.key === 'Escape') { e.preventDefault(); close(); }
+  });
+  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+  if (trigger) trigger.addEventListener('click', open);
+
+  document.addEventListener('keydown', e => {
+    const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName) || document.activeElement.isContentEditable;
+    if ((e.key === 'k' || e.key === 'K') && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      overlay.classList.contains('open') ? close() : open();
+    } else if (e.key === '/' && !typing && !overlay.classList.contains('open')) {
+      e.preventDefault();
+      open();
+    } else if (e.key === 'Escape' && overlay.classList.contains('open')) {
+      close();
+    }
+  });
+})();
 </script>
 
 </body>
