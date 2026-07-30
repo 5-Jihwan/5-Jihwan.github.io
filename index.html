@@ -307,7 +307,7 @@
       transition: border-color .25s, transform .25s;
     }
     .proj-card:hover { border-color: rgba(26,95,196,.35); transform: translateY(-4px); }
-    .proj-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+    .proj-head { display: flex; align-items: center; justify-content: space-between; gap: .6rem 1rem; flex-wrap: wrap; }
     .proj-name {
       font-family: 'Cormorant Garamond', serif;
       font-size: 1.5rem;
@@ -322,6 +322,7 @@
       padding: .25rem .7rem;
       border-radius: 999px;
       white-space: nowrap;
+      flex-shrink: 0;
     }
     .proj-status.dev { background: rgba(26,95,196,.1); color: var(--accent2); border: 1px solid rgba(26,95,196,.25); }
     .proj-status.priv { background: rgba(162,118,42,.1); color: var(--gold); border: 1px solid rgba(162,118,42,.25); }
