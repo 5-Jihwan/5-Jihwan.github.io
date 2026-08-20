@@ -326,6 +326,19 @@
     }
     .proj-status.dev { background: rgba(26,95,196,.1); color: var(--accent2); border: 1px solid rgba(26,95,196,.25); }
     .proj-status.priv { background: rgba(162,118,42,.1); color: var(--gold); border: 1px solid rgba(162,118,42,.25); }
+    .proj-status.live { background: rgba(15,157,122,.1); color: #0f9d7a; border: 1px solid rgba(15,157,122,.3); }
+    .proj-link {
+      align-self: flex-start;
+      font-family: 'DM Mono', monospace;
+      font-size: .72rem;
+      letter-spacing: .04em;
+      color: var(--accent2);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(26,95,196,.35);
+      padding-bottom: .1rem;
+      transition: border-color .2s, color .2s;
+    }
+    .proj-link:hover { color: var(--accent); border-color: var(--accent); }
     .proj-desc { font-size: .92rem; color: var(--muted); line-height: 1.75; flex: 1; }
     .proj-tags { display: flex; flex-wrap: wrap; gap: .5rem; }
     .proj-tags span {
@@ -874,6 +887,15 @@
       <div class="proj-desc">Web applications that accompany working papers — letting readers explore the data, toggle model assumptions, and watch findings respond, instead of reading static tables. Built with React and modern web tooling; each companion is released alongside its paper's publication.</div>
       <div class="proj-tags"><span>React</span><span>Data Visualization</span><span>Open Science</span></div>
     </div>
+    <div class="proj-card reveal reveal-delay-3">
+      <div class="proj-head">
+        <div class="proj-name">Deck System</div>
+        <span class="proj-status live">Live Demo</span>
+      </div>
+      <div class="proj-desc">A presentation engine for researchers: slides are data, the output is one self-contained HTML file that runs offline — with a presenter window, ink, region zoom, motion and an in-browser editor that saves back to the file. Built for lectures and conference talks on top of an open-source presenter engine; the layouts, editor, importer and build system are my own.</div>
+      <div class="proj-tags"><span>Vanilla JS</span><span>Build Tooling</span><span>Teaching</span></div>
+      <a class="proj-link" href="https://5-jihwan.github.io/deck-studio/" target="_blank" rel="noopener">Open the live deck &rarr;</a>
+    </div>
   </div>
 </section>
 
@@ -1253,6 +1275,7 @@ document.querySelectorAll('nav .logo, nav ul a, .tl-tab, .contact-links a').forE
     { kind: 'page', label: 'Keywords',   sub: '#network-section', run: () => showPage('network-section', true) },
     { kind: 'page', label: 'Contact',    sub: '#contact',         run: () => showPage('contact', true) },
     { kind: 'link', label: 'Email',      sub: 'ojh121523@skku.edu',          run: () => { location.href = 'mailto:ojh121523@skku.edu'; } },
+    { kind: 'link', label: 'Deck System demo', sub: '5-jihwan.github.io/deck-studio', run: () => window.open('https://5-jihwan.github.io/deck-studio/', '_blank', 'noopener') },
     { kind: 'link', label: 'GitHub',     sub: 'github.com/5-Jihwan',         run: () => window.open('https://github.com/5-Jihwan', '_blank', 'noopener') },
     { kind: 'link', label: 'LinkedIn',   sub: 'linkedin.com/in/jihwan-oh-ma', run: () => window.open('https://www.linkedin.com/in/jihwan-oh-ma', '_blank', 'noopener') },
   ];

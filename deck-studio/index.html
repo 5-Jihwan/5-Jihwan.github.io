@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8">
+<title>발표 스튜디오</title>
+<style>
+
+/* ══════════════════════════════════════════════════════════════
+   학술 발표 테마 — 다집단 비교(multi-group)를 전제로 한 색 체계
+   g1/g2는 색각이상 안전쌍(blue/amber). 표·수치는 tabular-nums.
+   외부 폰트·CDN 없음 — 엔진의 오프라인 보장을 깨지 않음.
+   ══════════════════════════════════════════════════════════════ */
+:root{
+  --ink:#0A1334;      /* 본문·제목 (발표자 창 네이비와 동일 계열) */
+  --paper:#F4F6FB;    /* 밝은 슬라이드 배경 */
+  --g1:#1F6FEB;       /* 집단 1 / 강조 */
+  --g2:#D4700E;       /* 집단 2 / 대비 */
+  --muted:#6B7590;    /* 보조 텍스트 */
+  --rule:#DDE2EF;     /* 괘선 */
+  --pad:96px;
+}
+
+/* ── 공통 ── */
+.s{position:absolute;inset:0;padding:var(--pad);box-sizing:border-box;display:flex;flex-direction:column;}
+.s-h{font-size:52px;font-weight:800;letter-spacing:-.02em;line-height:1.2;color:var(--ink);margin:0;}
+.s-eyebrow{font-size:14px;font-weight:700;letter-spacing:.22em;color:var(--g1);margin-bottom:18px;text-transform:uppercase;}
+.s-rule{height:3px;background:var(--ink);width:64px;margin:24px 0 34px;flex:0 0 auto;}
+.s-body{flex:1 1 auto;min-height:0;font-size:28px;line-height:1.6;color:var(--ink);}
+.s-foot{font-size:16px;color:var(--muted);margin-top:auto;padding-top:20px;}
+
+/* ── 표지 ── */
+.s-title{justify-content:center;background:var(--ink);color:#fff;}
+.s-title .s-h{color:#fff;font-size:68px;}
+.s-title .s-sub{font-size:28px;font-weight:300;color:#9DAEDD;margin-top:22px;line-height:1.5;}
+.s-title .s-meta{font-size:18px;color:#8B9DEF;margin-top:56px;line-height:1.8;}
+.s-title .s-rule{background:var(--g2);}
+
+/* ── 섹션 구분 ── */
+.s-section{justify-content:center;background:var(--paper);}
+.s-section .s-num{font-size:120px;font-weight:800;color:var(--rule);line-height:1;letter-spacing:-.04em;}
+.s-section .s-h{font-size:60px;margin-top:-18px;}
+.s-section .s-sub{font-size:24px;color:var(--muted);margin-top:18px;}
+
+/* ── 불릿 ── */
+.s-list{list-style:none;padding:0;margin:0;}
+.s-list li{position:relative;padding-left:42px;margin-bottom:26px;}
+.s-list li::before{content:'';position:absolute;left:0;top:16px;width:18px;height:3px;background:var(--g1);}
+.s-list li b{font-weight:700;}
+.s-list li em{font-style:normal;background:linear-gradient(transparent 62%, #FCE3C4 62%);font-weight:600;}
+
+/* ── 2단 ── */
+.s-two{display:grid;grid-template-columns:1fr 1fr;gap:56px;flex:1 1 auto;min-height:0;}
+.s-col{font-size:26px;line-height:1.6;}
+.s-col .s-colh{font-size:20px;font-weight:800;letter-spacing:.04em;padding-bottom:12px;margin-bottom:22px;border-bottom:2px solid var(--rule);}
+.s-two .s-col:first-child .s-colh{color:var(--g1);border-bottom-color:var(--g1);}
+.s-two .s-col:last-child .s-colh{color:var(--g2);border-bottom-color:var(--g2);}
+
+/* ── 표 (이 덱의 시그니처) ──
+   괘선은 의미가 있는 곳에만. 수치는 자릿수 정렬. */
+.s-table{width:100%;border-collapse:collapse;font-size:24px;font-variant-numeric:tabular-nums;}
+.s-table caption{text-align:left;font-size:16px;color:var(--muted);padding-bottom:12px;caption-side:top;}
+.s-table th{font-size:17px;font-weight:700;letter-spacing:.06em;color:var(--muted);text-align:right;padding:0 18px 12px;border-bottom:2px solid var(--ink);white-space:nowrap;}
+.s-table th:first-child{text-align:left;}
+.s-table td{padding:16px 18px;text-align:right;border-bottom:1px solid var(--rule);color:var(--ink);}
+.s-table td:first-child{text-align:left;font-weight:600;}
+.s-table tr:last-child td{border-bottom:2px solid var(--ink);}
+.s-table .hi{color:var(--g1);font-weight:700;}
+.s-table .hi2{color:var(--g2);font-weight:700;}
+.s-table .sig{font-size:16px;color:var(--muted);vertical-align:super;margin-left:2px;}
+
+/* ── 이미지 ── */
+.s-img{flex:1 1 auto;min-height:0;display:flex;align-items:center;justify-content:center;}
+.s-img img{max-width:100%;max-height:100%;object-fit:contain;}
+.s-cap{font-size:16px;color:var(--muted);margin-top:18px;}
+
+/* ── 인용 ── */
+.s-quote{justify-content:center;background:var(--paper);}
+.s-quote .s-q{font-size:40px;line-height:1.5;font-weight:300;color:var(--ink);border-left:5px solid var(--g2);padding-left:40px;}
+.s-quote .s-cite{font-size:20px;color:var(--muted);margin-top:32px;padding-left:45px;}
+
+/* ══════════════════════════════════════════════════════════════
+   편집 모드 UI — 도구는 조용하게, 무대만 밝게
+   ══════════════════════════════════════════════════════════════ */
+#edRoot{position:fixed;inset:0;z-index:200;background:#0D1226;color:#E7EAF5;
+  font-family:'Pretendard',-apple-system,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+  display:none;grid-template-columns:216px 1fr 320px;grid-template-rows:56px 1fr;}
+body.editing #edRoot{display:grid;}
+body.editing .nav,body.editing #presenterBtn{display:none !important;}
+#edRoot *{box-sizing:border-box;}
+
+.ed-bar{grid-column:1/-1;display:flex;align-items:center;gap:8px;padding:0 16px;background:#0A1334;border-bottom:1px solid #232C52;}
+.ed-bar .ed-name{font-weight:700;font-size:14px;letter-spacing:.02em;}
+.ed-bar .ed-spacer{flex:1;}
+.ed-btn{background:#1B2450;color:#E7EAF5;border:1px solid #2E3A6B;border-radius:7px;padding:7px 13px;
+  font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;}
+.ed-btn:hover:not(:disabled){background:#26315F;}
+.ed-btn:disabled{opacity:.3;cursor:default;}
+.ed-btn.pri{background:var(--g1);border-color:var(--g1);color:#fff;}
+.ed-btn.pri:hover{background:#1A5FD0;}
+.ed-btn.ed-ico{padding:7px 10px;font-size:15px;line-height:1;}
+.ed-btn:focus-visible,.ed-chip:focus-visible{outline:2px solid #8B9DEF;outline-offset:2px;}
+.ed-dirty{font-size:12px;color:#F2B45E;font-weight:600;display:none;}
+body.dirty .ed-dirty{display:inline;}
+
+/* ── 슬라이드 목록 — [+ 슬라이드]는 아래에 고정해서 길어져도 안 밀려남 ── */
+.ed-side{background:#0A1334;border-right:1px solid #232C52;display:grid;grid-template-rows:1fr auto;min-height:0;}
+#edList{overflow-y:auto;padding:10px;}
+.ed-addwrap{position:relative;display:flex;gap:5px;padding:10px;border-top:1px solid #232C52;background:#0A1334;}
+.ed-add{flex:1;}
+.ed-caret{padding:7px 9px;}
+.ed-menu{display:none;position:absolute;bottom:calc(100% + 6px);left:10px;right:10px;background:#141C3E;
+  border:1px solid #2E3A6B;border-radius:9px;padding:5px;box-shadow:0 12px 32px rgba(0,0,0,.5);z-index:5;}
+.ed-menu.on{display:grid;grid-template-columns:1fr 1fr;gap:3px;}
+.ed-menu button{background:none;border:0;color:#B9C2E0;text-align:left;padding:7px 9px;border-radius:6px;
+  font-size:12.5px;cursor:pointer;font-family:inherit;}
+.ed-menu button:hover{background:var(--g1);color:#fff;}
+
+.ed-card{display:flex;align-items:center;gap:7px;padding:6px;border-radius:8px;border:1px solid transparent;
+  cursor:pointer;margin-bottom:5px;}
+.ed-card:hover{background:#141C3E;}
+.ed-card.on{background:#182352;border-color:var(--g1);}
+.ed-card.drag{opacity:.4;}
+.ed-card.over{border-color:var(--g2);}
+.ed-card .n{font-size:10px;color:#7C87AD;width:16px;flex:0 0 auto;font-variant-numeric:tabular-nums;}
+/* 썸네일 = 슬라이드를 실제로 렌더해 축소한 것 (캡처 아님 → 항상 원본과 일치) */
+.ed-card .tw{flex:1;position:relative;aspect-ratio:16/9;overflow:hidden;background:#fff;border-radius:3px;
+  pointer-events:none;}
+.ed-card .ti{position:absolute;top:0;left:0;width:1600px;height:900px;transform-origin:top left;}
+
+.ed-stage{position:relative;display:flex;align-items:center;justify-content:center;padding:24px;
+  background:#070B18;overflow:auto;}
+.ed-stage.over{outline:2px dashed var(--g1);outline-offset:-10px;}
+.ed-drop{display:none;position:absolute;inset:24px;align-items:center;justify-content:center;
+  background:rgba(7,11,24,.86);color:#9DB8F0;font-size:15px;font-weight:600;border-radius:10px;
+  pointer-events:none;z-index:2;}
+.ed-stage.over .ed-drop{display:flex;}
+.ed-frame{width:1600px;height:900px;position:relative;background:#fff;transform-origin:center center;
+  flex:0 0 auto;box-shadow:0 20px 60px rgba(0,0,0,.5);}
+.ed-frame [contenteditable]{outline:none;border-radius:3px;}
+.ed-frame [contenteditable]:hover{box-shadow:0 0 0 2px rgba(31,111,235,.25);}
+.ed-frame [contenteditable]:focus{box-shadow:0 0 0 2px var(--g1);}
+.ed-frame [data-cell]{min-width:60px;}
+
+.ed-insp{background:#0A1334;border-left:1px solid #232C52;overflow-y:auto;padding:16px;}
+.ed-lbl{font-size:11px;font-weight:700;letter-spacing:.14em;color:#7C87AD;margin:18px 0 8px;}
+.ed-lbl:first-child{margin-top:0;}
+.ed-chips{display:flex;flex-wrap:wrap;gap:6px;}
+.ed-chip{background:#141C3E;border:1px solid #2E3A6B;color:#B9C2E0;border-radius:999px;padding:5px 11px;
+  font-size:12px;cursor:pointer;font-family:inherit;}
+.ed-chip.on{background:var(--g1);border-color:var(--g1);color:#fff;font-weight:600;}
+.ed-ta{width:100%;background:#070B18;border:1px solid #2E3A6B;border-radius:8px;color:#E7EAF5;padding:11px;
+  font-size:13px;line-height:1.65;font-family:inherit;resize:vertical;}
+.ed-ta:focus{outline:none;border-color:var(--g1);}
+.ed-hint{font-size:11.5px;color:#7C87AD;line-height:1.6;margin-top:8px;}
+.ed-ops{display:flex;gap:6px;margin-top:10px;}
+.ed-ops .ed-btn{flex:1;padding:7px 0;font-size:12px;}
+.ed-del{color:#F08A8A;border-color:#4A2A3A;}
+
+/* ── 캔버스(자유 배치) ── */
+.s-canvas{position:absolute;inset:0;overflow:hidden;background:#fff;}
+.s-canvas .ci{box-sizing:border-box;}
+.s-canvas .ci-text{outline:none;}
+/* 편집 중에만: 선택 표시·리사이즈 핸들·호버 (발표 화면엔 안 나옴) */
+body.editing .ed-frame .ci{cursor:move;}
+body.editing .ed-frame .ci:hover{box-shadow:0 0 0 1.5px rgba(31,111,235,.4);}
+body.editing .ed-frame .ci.sel{box-shadow:0 0 0 2px var(--g1);}
+body.editing .ed-frame .ci-text[contenteditable="true"]{cursor:text;box-shadow:0 0 0 2px var(--g1);}
+.ci-handle{position:absolute;right:-8px;bottom:-8px;width:16px;height:16px;border-radius:50%;
+  background:var(--g1);border:2px solid #fff;cursor:nwse-resize;box-shadow:0 1px 4px rgba(0,0,0,.4);}
+
+/* 장 배경색(s.bg) — 레이아웃 자체 배경(표지 네이비 등)을 투명화해 지정 색이 보이게 */
+.slidebg > .s{background:transparent !important;}
+
+/* ── 로고 오버레이 (발표·편집·썸네일 공통) ── */
+.deck-logo{position:absolute;height:var(--logo-h,72px);width:auto;object-fit:contain;z-index:6;pointer-events:none;}
+.deck-logo.tl{top:44px;left:56px;} .deck-logo.tr{top:44px;right:56px;}
+.deck-logo.bl{bottom:44px;left:56px;} .deck-logo.br{bottom:44px;right:56px;}
+
+/* ── 로고 인스펙터 ── */
+.ed-brand .ed-add{width:100%;}
+.ed-logo-row{display:flex;gap:12px;align-items:center;}
+.ed-logo-prev{width:76px;height:50px;object-fit:contain;background:#070B18;border:1px solid #2E3A6B;border-radius:6px;padding:5px;flex:0 0 auto;}
+.ed-logo-ctl{display:flex;flex-direction:column;gap:8px;}
+.ed-logo-pos{display:grid;grid-template-columns:repeat(2,28px);grid-auto-rows:24px;gap:3px;}
+.ed-logo-pos button,.ed-logo-size button{background:#141C3E;border:1px solid #2E3A6B;color:#B9C2E0;border-radius:5px;cursor:pointer;font-family:inherit;font-size:12px;}
+.ed-logo-pos button.on{background:var(--g1);border-color:var(--g1);color:#fff;}
+.ed-logo-size{display:flex;align-items:center;gap:8px;}
+.ed-logo-size span{font-size:12px;color:#B9C2E0;min-width:40px;text-align:center;}
+.ed-logo-size button{width:28px;height:24px;}
+
+/* ── 글자 서식 미니 툴바 ── */
+#edFmt{position:fixed;z-index:300;display:none;gap:4px;align-items:center;background:#141C3E;
+  border:1px solid #2E3A6B;border-radius:10px;padding:5px 7px;box-shadow:0 8px 28px rgba(0,0,0,.5);}
+#edFmt.on{display:flex;}
+#edFmt button{width:28px;height:28px;border:1px solid transparent;border-radius:6px;background:transparent;
+  color:#E7EAF5;cursor:pointer;font-size:14px;font-family:inherit;display:flex;align-items:center;justify-content:center;padding:0;}
+#edFmt button:hover{background:#1A2450;}
+#edFmt .sw{width:20px;height:20px;border-radius:50%;border:2px solid rgba(255,255,255,.3);}
+#edFmt .sep{width:1px;height:20px;background:#2E3A6B;margin:0 2px;flex:0 0 auto;}
+/* 색 직접 고르기 (툴바·캔버스 공용) */
+.cpick,.ci-cpick{position:relative;width:22px;height:22px;border-radius:50%;overflow:hidden;cursor:pointer;
+  border:2px dashed #8B9DEF;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;}
+.cpick input,.ci-cpick input{position:absolute;inset:-4px;width:200%;height:200%;border:none;padding:0;cursor:pointer;opacity:0;}
+.cpick span,.ci-cpick span{font-size:13px;color:#B9C2E0;pointer-events:none;}
+.ci-cpick{width:26px;height:26px;}
+
+#edHome{text-decoration:none;position:fixed;right:20px;bottom:96px;z-index:60;background:rgba(10,19,52,.72);color:#fff;
+  border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:8px 16px;font-size:12px;font-weight:600;
+  letter-spacing:.03em;cursor:pointer;opacity:.85;
+  font-family:'Pretendard',-apple-system,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;}
+#edHome:hover{opacity:1;}
+#edEnter{position:fixed;right:20px;bottom:56px;z-index:60;background:rgba(10,19,52,.72);color:#fff;
+  border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:8px 16px;font-size:12px;font-weight:600;
+  letter-spacing:.03em;cursor:pointer;opacity:.85;
+  font-family:'Pretendard',-apple-system,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;}
+#edEnter:hover{opacity:1;}
+body.presenter-mode #edEnter,body.editing #edEnter,body.uiIdle #edEnter,
+body.presenter-mode #edHome,body.editing #edHome,body.uiIdle #edHome{display:none;}
+@media print{#edRoot,#edEnter,#edHome{display:none !important;}}
+@media (prefers-reduced-motion:reduce){*{transition:none !important;animation:none !important;}}
+
+/* ══ 장 모션(s.anim) — 페이드·떠오르기·확대·밀어넣기·순차 등장 ══
+   .slide.active 하위로만 스코프: 엔진이 장을 넘겨 active 를 다시 붙일 때마다 재생.
+   편집 캔버스·썸네일은 .slide 밖이라 정지 화면(편집은 차분하게, 발표만 움직이게).
+   외부 리소스 0 — CSS 키프레임만. 접근성 감속은 위 prefers-reduced-motion 전역이 처리. */
+@keyframes dkFade{from{opacity:0}to{opacity:1}}
+@keyframes dkRise{from{opacity:0;transform:translateY(26px)}to{opacity:1;transform:none}}
+@keyframes dkZoom{from{opacity:0;transform:scale(.955)}to{opacity:1;transform:none}}
+@keyframes dkWipe{from{opacity:0;transform:translateX(-34px)}to{opacity:1;transform:none}}
+
+.slide.active .anim-fade{animation:dkFade .6s ease-out both;}
+.slide.active .anim-zoom{animation:dkZoom .55s cubic-bezier(.22,.61,.36,1) both;}
+
+/* 떠오르기·밀어넣기 — 장 안 요소가 위에서부터 차례로 */
+.slide.active .anim-rise .s>*{animation:dkRise .55s cubic-bezier(.22,.61,.36,1) both;}
+.slide.active .anim-wipe .s>*{animation:dkWipe .5s cubic-bezier(.22,.61,.36,1) both;}
+.slide.active .anim-rise .s>*:nth-child(2),.slide.active .anim-wipe .s>*:nth-child(2){animation-delay:.09s;}
+.slide.active .anim-rise .s>*:nth-child(3),.slide.active .anim-wipe .s>*:nth-child(3){animation-delay:.18s;}
+.slide.active .anim-rise .s>*:nth-child(4),.slide.active .anim-wipe .s>*:nth-child(4){animation-delay:.27s;}
+.slide.active .anim-rise .s>*:nth-child(5),.slide.active .anim-wipe .s>*:nth-child(5){animation-delay:.36s;}
+.slide.active .anim-rise .s>*:nth-child(6),.slide.active .anim-wipe .s>*:nth-child(6){animation-delay:.45s;}
+.slide.active .anim-rise .s>*:nth-child(n+7),.slide.active .anim-wipe .s>*:nth-child(n+7){animation-delay:.54s;}
+
+/* 순차 등장 — 뼈대는 먼저 뜨고, 항목·표 행·2단 컬럼이 하나씩 */
+.slide.active .anim-seq .s>*{animation:dkFade .4s ease-out both;}
+.slide.active .anim-seq :is(.s-list>li,.s-table tbody tr,.s-two .s-col){animation:dkRise .5s cubic-bezier(.22,.61,.36,1) both;}
+.slide.active .anim-seq :is(.s-list>li,.s-table tbody tr,.s-two .s-col):nth-child(1){animation-delay:.25s;}
+.slide.active .anim-seq :is(.s-list>li,.s-table tbody tr,.s-two .s-col):nth-child(2){animation-delay:.6s;}
+.slide.active .anim-seq :is(.s-list>li,.s-table tbody tr,.s-two .s-col):nth-child(3){animation-delay:.95s;}
+.slide.active .anim-seq :is(.s-list>li,.s-table tbody tr,.s-two .s-col):nth-child(4){animation-delay:1.3s;}
+.slide.active .anim-seq :is(.s-list>li,.s-table tbody tr,.s-two .s-col):nth-child(5){animation-delay:1.65s;}
+.slide.active .anim-seq :is(.s-list>li,.s-table tbody tr,.s-two .s-col):nth-child(6){animation-delay:2s;}
+.slide.active .anim-seq :is(.s-list>li,.s-table tbody tr,.s-two .s-col):nth-child(7){animation-delay:2.35s;}
+.slide.active .anim-seq :is(.s-list>li,.s-table tbody tr,.s-two .s-col):nth-child(n+8){animation-delay:2.7s;}
+
+/* ── 편집 캔버스: 필드 드래그 이동 어포던스 ── */
+#edFrame [data-f]:hover{outline:1px dashed rgba(139,157,239,.55);outline-offset:3px;cursor:grab;}
+#edFrame [data-f]:focus,#edFrame [data-f]:focus-within{outline:2px solid rgba(139,157,239,.7);cursor:text;}
+#edFrame .f-drag{outline:2px dashed #8B9DEF !important;cursor:grabbing !important;user-select:none;}
+
+/* ══ 발표자 창 기본 레이아웃 보정 (엔진 무접촉 — 테마가 엔진 CSS 뒤에 삽입되어 같은 선택자를 덮어씀) ══
+   엔진 기본은 .pTop{flex:0 1 220px} — 현재 슬라이드 영역이 창 크기와 무관하게 220px라
+   큰 모니터에서도 슬라이드가 작고 판서가 불편합니다. 기본을 "남는 높이를 현재 슬라이드가
+   모두 차지"로 바꿉니다. 사용자가 스플리터를 끌면 엔진이 인라인 style.flex 를 덮어쓰므로
+   (localStorage 기억) 수동 조정은 그대로 존중됩니다. 모니터가 바뀌어도 CSS 기본은 비율로 따라갑니다. */
+#presenterRoot{--thumbW:clamp(150px, 11vw, 240px);}
+#presenterRoot .pTop{flex:1 1 auto;min-height:220px;}
+#presenterRoot .pBottom{flex:0 0 auto;}
+#presenterRoot .pFilmstripWrap{flex:0 0 auto;max-height:calc(var(--thumbW) * 9 / 16 + 58px);}
+#presenterRoot .pFilmstrip{flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;}
+#presenterRoot .pNotes{max-height:clamp(88px, 18vh, 200px);}
+/* 작은 화면(노트북 1366×768 등)에선 다음 슬라이드 폭을 줄여 현재 슬라이드에 양보 */
+@media (max-width:1400px){ #presenterRoot{--nextW:200px;} }
+@media (max-height:760px){ #presenterRoot .pNotes{max-height:88px;} #presenterRoot .pTop{min-height:180px;} }
+/* 작은 창에선 컨트롤바·타이머를 촘촘하게 — 현재 슬라이드에 높이를 더 줌 */
+@media (max-height:820px){
+  #presenterRoot{padding:14px 18px;gap:8px;}
+  #presenterRoot .pControls{padding:6px 12px;gap:8px;}
+  #presenterRoot .pTimer button,#presenterRoot .pNav button,#presenterRoot .pCtlBtn{padding:7px 12px;font-size:13px;}
+  #presenterRoot .pTimerDisplay{font-size:22px;min-width:80px;}
+  #presenterRoot .pClock,#presenterRoot .pCounter{font-size:16px;}
+  #presenterRoot .pNotes{padding:12px 16px;line-height:1.45;}
+  #presenterRoot .pTag{margin-bottom:4px;font-size:12px;}
+  #presenterRoot .pBottom{gap:8px;}
+}
+/* 단축키 도움말(? / H) — 엔진 기본은 세로 한 줄 표(max-width 600px)라 노트북에서 위아래가 잘림.
+   카드를 넓히고 표를 2단(column)으로 흘려 넣어 높이를 절반으로. 세로 공간이 모자라면 카드 안에서 스크롤 */
+#helpOverlay .pHelpCard{max-width:min(1180px, 94vw);width:min(1180px, 94vw);max-height:92vh;overflow:auto;padding:24px 30px;}
+#helpOverlay .pHelpCard table,#helpOverlay .pHelpCard tbody{display:block;width:100%;}
+#helpOverlay .pHelpCard tbody{column-count:2;column-gap:40px;}
+#helpOverlay .pHelpCard tr{display:grid;grid-template-columns:auto 1fr;gap:0 14px;break-inside:avoid;padding:5px 0;}
+#helpOverlay .pHelpCard td{display:block;}
+#helpOverlay .pHelpCard td.pKey{padding-right:0;}
+#helpOverlay .pHelpCard tr:has(.pHelpSec){grid-template-columns:1fr;}
+#helpOverlay .pHelpCard tr:first-child td.pHelpSec{padding-top:0;}
+@media (max-width:900px){ #helpOverlay .pHelpCard tbody{column-count:1;} }
+
+body{margin:0;background:var(--ink);color:#E7EAF5;font-family:'Pretendard',-apple-system,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;}
+.wrap{max-width:1240px;margin:0 auto;padding:48px 32px 80px;}
+.top{display:flex;align-items:flex-end;gap:14px;margin-bottom:34px;flex-wrap:wrap;}
+h1{font-size:15px;font-weight:700;letter-spacing:.24em;color:#8B9DEF;margin:0 0 6px;}
+.sub{font-size:13px;color:#7C87AD;margin:0;}
+.top .sp{flex:1;}
+.b{background:#1B2450;color:#E7EAF5;border:1px solid #2E3A6B;border-radius:8px;padding:9px 14px;font-size:13px;
+  font-weight:600;cursor:pointer;font-family:inherit;text-decoration:none;display:inline-block;}
+.b:hover:not(:disabled){background:#26315F;} .b:disabled{opacity:.35;cursor:default;}
+.b.pri{background:var(--g1);border-color:var(--g1);color:#fff;}
+.b:focus-visible{outline:2px solid #8B9DEF;outline-offset:2px;}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:26px;}
+.card{position:relative;border:1px solid #232C52;border-radius:12px;overflow:hidden;background:#0D1226;transition:border-color .18s,transform .18s;}
+.card:hover{border-color:var(--g1);transform:translateY(-3px);}
+.card a{display:block;text-decoration:none;color:inherit;}
+.pv{position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;background:#fff;border-bottom:1px solid #232C52;}
+.pvi{position:absolute;top:0;left:0;width:1600px;height:900px;transform-origin:top left;}
+.meta{padding:14px 16px 16px;}
+.t{font-size:15px;font-weight:700;line-height:1.4;margin-bottom:6px;}
+.d{font-size:11.5px;color:#7C87AD;font-variant-numeric:tabular-nums;}
+.rm{position:absolute;top:9px;right:9px;background:rgba(10,19,52,.9);border:1px solid #4A2A3A;color:#F08A8A;
+  border-radius:7px;padding:4px 9px;font-size:11px;cursor:pointer;display:none;font-family:inherit;}
+body.live .rm,.card:hover .rm{display:block;}
+.msg{border-left:3px solid var(--g1);background:#0A1430;color:#9DB8F0;padding:12px 15px;border-radius:0 8px 8px 0;
+  font-size:13px;line-height:1.7;margin-bottom:26px;}
+.msg.warn{border-color:var(--g2);background:#1A1206;color:#F2C88E;}
+.msg b{color:#fff;}
+.foot{margin-top:48px;font-size:11.5px;color:#5A648C;line-height:1.9;}
+code{background:#141C3E;padding:2px 6px;border-radius:4px;}
+body.dropping::after{content:'HTML 덱을 놓으면 가져옵니다';position:fixed;inset:0;z-index:99;
+  display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;color:#fff;
+  background:rgba(31,111,235,.24);border:4px dashed var(--g1);pointer-events:none;}
+</style></head>
+<body><div class="wrap">
+<div class="top">
+  <div><h1>발표 스튜디오</h1><p class="sub" id="sub">1개 덱 · 9장</p></div>
+  <span class="sp"></span>
+  <select class="b" id="sort" title="정렬">
+    <option value="new">최신순</option>
+    <option value="old">오래된순</option>
+    <option value="name">이름순</option>
+  </select>
+  <button class="b" id="imp" disabled title="HTML 발표자료 여러 개를 한 번에 덱으로 가져옵니다">HTML 가져오기</button>
+  <input type="file" id="impPick" accept=".html,.htm" multiple hidden>
+  <button class="b" id="new" disabled>+ 새 덱</button>
+  <button class="b" id="rebuild" disabled>다시 빌드</button>
+  <button class="b pri" id="connect">폴더 연결</button>
+</div>
+<div class="msg" id="msg">
+  <b>폴더를 연결하면</b> 이 페이지가 <code>decks/</code>를 직접 읽고 <code>dist/</code>에 씁니다 —
+  터미널에서 <code>node build.mjs</code>를 칠 일이 없어집니다. 연결 안 해도 아래 아카이브는 그대로 씁니다.
+</div>
+<div class="grid" id="g"></div>
+<p class="foot">
+표지는 캡처가 아니라 슬라이드를 실제로 렌더해 축소한 것이라, 항상 원본과 같습니다.<br>
+연결 없이 쓰려면 <code>node build.mjs</code> · 기존 HTML 덱은 <a href="../tools/import.html" style="color:#8B9DEF;">임포터</a>로.
+</p>
+</div>
+<script>
+/* ══════════════════════════════════════════════════════════════
+   레이아웃 정의 — 덱과 아카이브 색인이 함께 씁니다.
+   data-f="필드명"이 붙은 요소가 캔버스에서 직접 고칠 수 있는 칸입니다.
+   ══════════════════════════════════════════════════════════════ */
+const T = 'text', A = 'area';
+const LAYOUTS = {
+  title:{ label:'표지', fields:[['title',T,'제목'],['sub',T,'부제'],['meta',T,'발표자·소속·일자']],
+    render:s=>`<div class="s s-title">
+      <div class="s-h" data-f="title">${s.title||''}</div>
+      <div class="s-rule"></div>
+      <div class="s-sub" data-f="sub">${s.sub||''}</div>
+      <div class="s-meta" data-f="meta">${s.meta||''}</div>
+    </div>` },
+
+  section:{ label:'구분', fields:[['num',T,'번호'],['title',T,'제목'],['sub',T,'한 줄 요약']],
+    render:s=>`<div class="s s-section">
+      <div class="s-num" data-f="num">${s.num||''}</div>
+      <div class="s-h" data-f="title">${s.title||''}</div>
+      <div class="s-sub" data-f="sub">${s.sub||''}</div>
+    </div>` },
+
+  bullets:{ label:'불릿', fields:[['eyebrow',T,'윗머리'],['title',T,'제목'],['items',A,'항목 — 한 줄에 하나']],
+    render:s=>`<div class="s">
+      <div class="s-eyebrow" data-f="eyebrow">${s.eyebrow||''}</div>
+      <div class="s-h" data-f="title">${s.title||''}</div>
+      <div class="s-rule"></div>
+      <div class="s-body"><ul class="s-list" data-f="items" data-kind="list">${
+        (lines(s.items).length?lines(s.items):['']).map(t=>`<li>${t||'<br>'}</li>`).join('')}</ul></div>
+    </div>` },
+
+  two:{ label:'2단', fields:[['title',T,'제목'],['leftHead',T,'왼쪽 머리'],['left',A,'왼쪽 본문'],['rightHead',T,'오른쪽 머리'],['right',A,'오른쪽 본문']],
+    render:s=>`<div class="s">
+      <div class="s-h" data-f="title">${s.title||''}</div>
+      <div class="s-rule"></div>
+      <div class="s-two">
+        <div class="s-col"><div class="s-colh" data-f="leftHead">${s.leftHead||''}</div><div data-f="left">${s.left||''}</div></div>
+        <div class="s-col"><div class="s-colh" data-f="rightHead">${s.rightHead||''}</div><div data-f="right">${s.right||''}</div></div>
+      </div>
+    </div>` },
+
+  table:{ label:'표', fields:[['title',T,'제목'],['caption',T,'자료 출처·표본'],['table',A,'표 — 첫 줄이 머리글, 칸은 | 로 구분']],
+    render:s=>{
+      const rows = lines(s.table).map(r=>r.split('|').map(c=>c.trim()));
+      const head = rows.shift()||[];
+      return `<div class="s">
+        <div class="s-h" data-f="title">${s.title||''}</div>
+        <div class="s-rule"></div>
+        <div class="s-body"><table class="s-table" data-f="table" data-kind="table">
+          <caption data-f="caption">${s.caption||''}</caption>
+          <thead><tr>${head.map(c=>`<th data-cell>${c}</th>`).join('')}</tr></thead>
+          <tbody>${rows.map(r=>`<tr>${r.map(c=>`<td data-cell>${c}</td>`).join('')}</tr>`).join('')}</tbody>
+        </table></div>
+      </div>`;
+    } },
+
+  image:{ label:'그림', fields:[['title',T,'제목'],['src',T,'파일명 — 덱과 같은 폴더에 두세요'],['caption',T,'캡션']],
+    render:s=>`<div class="s">
+      <div class="s-h" data-f="title">${s.title||''}</div>
+      <div class="s-rule"></div>
+      <div class="s-img">${s.src?`<img src="${s.src}" alt="${(s.caption||'').replace(/"/g,'&quot;')}">`
+        :`<div style="color:var(--muted);font-size:22px;">오른쪽 칸에 그림 파일명을 넣으세요</div>`}</div>
+      <div class="s-cap" data-f="caption">${s.caption||''}</div>
+    </div>` },
+
+  quote:{ label:'인용', fields:[['quote',T,'인용문'],['cite',T,'출처']],
+    render:s=>`<div class="s s-quote">
+      <div class="s-q" data-f="quote">${s.quote||''}</div>
+      <div class="s-cite" data-f="cite">${s.cite||''}</div>
+    </div>` },
+
+  html:{ label:'자유', fields:[['html',A,'HTML — 1600×900 기준']],
+    render:s=>s.html||'<div class="s"><div class="s-body" style="color:var(--muted);">빈 슬라이드</div></div>' },
+
+  /* 캔버스 — 요소를 1600×900 위 절대좌표로 자유 배치. items 배열이 원본.
+     편집기가 드래그·크기조절·인라인편집을 붙입니다(모두 edit()/editText() 관문). */
+  canvas:{ label:'캔버스', fields:[],
+    render:s=>`<div class="s s-canvas">${(Array.isArray(s.items)?s.items:[]).map(renderItem).join('')}</div>` }
+};
+
+function renderItem(it, i){
+  const pos = `position:absolute;left:${it.x|0}px;top:${it.y|0}px;`;
+  if(it.type === 'rect'){
+    return `<div class="ci ci-rect" data-ci="${i}" style="${pos}width:${it.w||220}px;height:${it.h||130}px;`
+      + `background:${it.fill||'#1F6FEB'};border-radius:${it.r==null?14:it.r}px;`
+      + `${it.stroke?`border:${it.sw||3}px solid ${it.stroke};`:''}"></div>`;
+  }
+  if(it.type === 'ellipse'){
+    return `<div class="ci ci-rect" data-ci="${i}" style="${pos}width:${it.w||180}px;height:${it.h||180}px;`
+      + `background:${it.fill||'#D4700E'};border-radius:50%;`
+      + `${it.stroke?`border:${it.sw||3}px solid ${it.stroke};`:''}"></div>`;
+  }
+  if(it.type === 'image'){
+    return `<div class="ci ci-image" data-ci="${i}" style="${pos}width:${it.w||360}px;">`
+      + `<img src="${it.src||''}" style="width:100%;display:block;border-radius:${it.r||0}px;" alt=""></div>`;
+  }
+  if(it.type === 'html'){
+    return `<div class="ci ci-html" data-ci="${i}" style="${pos}width:${it.w||600}px;height:${it.h||300}px;overflow:hidden;">${it.html||''}</div>`;
+  }
+  return `<div class="ci ci-text" data-ci="${i}" data-ck="text" style="${pos}width:${it.w||460}px;`
+    + `font-size:${it.size||40}px;color:${it.color||'#0A1334'};font-weight:${it.weight||700};`
+    + `text-align:${it.align||'left'};line-height:1.3;">${it.text||''}</div>`;
+}
+
+function lines(v){ return String(v||'').split('\n').filter(t=>t.trim()!==''); }
+
+/* 로고/브랜드 마크 — 레이아웃과 무관하게 슬라이드 위에 얹습니다.
+   base64 data URI라 외부 리소스 규칙을 안 깹니다. 발표·편집 캔버스·썸네일이
+   모두 slideHTML을 거치므로 여기 한 곳이면 세 경로에 일관되게 나옵니다. */
+function slideLogo(s){
+  if(!s || !s.logo) return '';
+  const pos = ({tl:'tl',tr:'tr',bl:'bl',br:'br'})[s.logoPos] || 'br';
+  const h = Math.max(24, Math.min(240, +s.logoH || 72));
+  return `<img class="deck-logo ${pos}" style="--logo-h:${h}px" src="${s.logo}" alt="">`;
+}
+
+/* 글꼴 — 외부 리소스 규칙(철칙 4) 때문에 시스템 상주 폰트만. 한글은 고딕/명조/모노가
+   어느 OS에서도 안전합니다. 개성 있는 폰트는 별도로 base64 번들해야 합니다. */
+const FONTS = {
+  sans:  "'Pretendard','Apple SD Gothic Neo','Malgun Gothic',sans-serif",
+  serif: "'Nanum Myeongjo','AppleMyungjo','Batang',serif",
+  round: "'Gulim','굴림','Apple SD Gothic Neo',sans-serif",
+  brush: "'Gungsuh','궁서','AppleMyungjo',serif",
+  mono:  "'D2Coding','Consolas','Menlo',monospace"
+};
+
+function slideHTML(s){
+  const L = LAYOUTS[s.layout] || LAYOUTS.html;
+  let html = L.render(s) + slideLogo(s);
+  const st = [], cls = [];
+  if(s && s.font){
+    /* 내장 스택이면 그걸, 아니면 업로드한 커스텀 폰트명(@font-face는 render/editor가 주입) */
+    st.push('font-family:' + (FONTS[s.font] || `'${String(s.font).replace(/'/g, '')}', sans-serif`));
+  }
+  if(s && s.bg){ cls.push('slidebg'); st.push('background:' + s.bg); }  /* 장 배경색 — .slidebg가 레이아웃 자체 배경을 투명화 */
+  /* 모션 — 데이터(s.anim)→클래스. 재생 CSS는 .slide.active 하위로 스코프돼
+     발표 화면에서만 움직이고, 편집 캔버스·썸네일(비 .slide 컨테이너)은 정지 상태 */
+  if(s && s.anim) cls.push('anim-' + String(s.anim).replace(/[^a-z-]/g, ''));
+  /* 요소 위치 오프셋 — 편집 캔버스에서 좌클릭 드래그로 옮긴 값(s.off = {필드:[dx,dy]}).
+     transform이라 주변 흐름은 그대로(레이아웃 붕괴 없음). data-f는 필드당 정확히
+     1번 나오고 레이아웃이 style 속성을 안 쓰므로 문자열 치환이 안전하다. */
+  if(s && s.off){
+    for(const f in s.off){
+      const o = s.off[f] || [];
+      const x = Math.round(+o[0] || 0), y = Math.round(+o[1] || 0);
+      if(!x && !y) continue;
+      html = html.replace('data-f="' + f + '"',
+        'data-f="' + f + '" style="transform:translate(' + x + 'px,' + y + 'px)"');
+    }
+  }
+  if(st.length || cls.length){
+    html = `<div class="${cls.join(' ')}" style="position:absolute;inset:0;${st.join(';')}">${html}</div>`;
+  }
+  return html;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   기존 HTML 덱 → 덱 데이터. 브라우저 전용(DOMParser + CSSOM).
+   tools/import.html 과 스튜디오(dist/index.html)가 함께 씁니다 —
+   조립기(assemble.js)처럼 로직을 한 곳에만 둡니다.
+   ══════════════════════════════════════════════════════════════ */
+
+/* 슬라이드 찾기 — 흔한 관례를 순서대로 */
+const IMPORT_SELECTORS = ['section.slide', 'div.slide', '.slide', 'section[class*="slide"]', '.reveal section', 'section'];
+
+function importFindSlides(doc){
+  for(const sel of IMPORT_SELECTORS){
+    const els = [...doc.querySelectorAll(sel)];
+    if(els.length >= 2) return { sel, els };
+  }
+  return { sel: null, els: [] };
+}
+
+/* 원본 크기 추정 — .slide 규칙의 px 값 */
+function importGuessSize(css){
+  const m = css.match(/\.slide\s*\{[^}]*?width\s*:\s*(\d+)px[^}]*?height\s*:\s*(\d+)px/i)
+        || css.match(/\.slide\s*\{[^}]*?height\s*:\s*(\d+)px[^}]*?width\s*:\s*(\d+)px/i);
+  if(m) return { w: +m[1], h: +m[2], sure: true };
+  /* width: min(1180px, 96vw, …) + aspect-ratio: 16/9 처럼 반응형으로 잡은 덱 — px 상한이 설계 크기 */
+  const r = css.match(/\.slide\s*\{[^}]*?width\s*:\s*min\(\s*(\d+)px[^}]*?aspect-ratio\s*:\s*(\d+)\s*\/\s*(\d+)/i);
+  if(r) return { w: +r[1], h: Math.round(+r[1] * +r[3] / +r[2]), sure: true };
+  const a = css.match(/\.slide\s*\{[^}]*?width\s*:\s*(\d+)px[^}]*?aspect-ratio\s*:\s*(\d+)\s*\/\s*(\d+)/i);
+  if(a) return { w: +a[1], h: Math.round(+a[1] * +a[3] / +a[2]), sure: true };
+  const v = css.match(/max-width\s*:\s*(\d+)px/i);
+  if(v) return { w: +v[1], h: Math.round(+v[1] * 9 / 16), sure: false };
+  return { w: 1600, h: 900, sure: false };
+}
+
+/* 화면 단위(vw/vh/vmin/vmax 등) → 프레임 단위. 원본이 96vw 같은 값으로 슬라이드를 잡았으면
+   1600×900 프레임 안에서도 실제 창을 기준으로 커져 넘칩니다. importWrap이 래퍼에 --iw/--ih(원본 크기)를
+   주므로, 그 변수 기준 calc()로 바꿔 프레임 안에 가둡니다. */
+function importFrameUnits(cssText){
+  return cssText.replace(/(-?\d*\.?\d+)(d|s|l)?v(w|h|min|max)\b/g, (_, n, __, ax) => {
+    const v = ax === 'w' ? 'var(--iw)' : ax === 'h' ? 'var(--ih)' : ax === 'min' ? 'min(var(--iw),var(--ih))' : 'max(var(--iw),var(--ih))';
+    return 'calc(' + n + ' * ' + v + ' / 100)';
+  });
+}
+
+/* CSS 스코핑 — media='not all'로 브라우저 파서만 빌려 씁니다(적용은 안 됨). */
+function importScopeCSS(css, scope){
+  const st = document.createElement('style');
+  st.media = 'not all';
+  st.textContent = css;
+  document.head.appendChild(st);
+  let rules;
+  try{ rules = [...st.sheet.cssRules]; }
+  catch(e){ st.remove(); return { css: '', dropped: ['CSS를 읽지 못했습니다'] }; }
+
+  const dropped = [];
+  const fix = sel => sel.split(',').map(s => {
+    s = s.trim();
+    if(/^(html|body|:root)$/i.test(s)) return scope;
+    if(/^(html|body)\b/i.test(s)) return scope + s.replace(/^(html|body)/i, '');
+    return scope + ' ' + s;
+  }).join(', ');
+
+  const walk = list => list.map(r => {
+    if(r.type === CSSRule.STYLE_RULE) return fix(r.selectorText) + '{' + importFrameUnits(r.style.cssText) + '}';
+    if(r.type === CSSRule.MEDIA_RULE){
+      if(/print/i.test(r.conditionText)) return '';
+      /* 창 크기에 반응하는 규칙은 버립니다 — 슬라이드는 항상 1600×900 프레임 안이라 모바일·세로 보정이 오히려 깨뜨립니다 */
+      if(/width|height|orientation|aspect-ratio/i.test(r.conditionText)){ dropped.push('@media ' + r.conditionText); return ''; }
+      return '@media ' + r.conditionText + '{' + walk([...r.cssRules]).join('') + '}';
+    }
+    if(r.type === CSSRule.KEYFRAMES_RULE || r.type === CSSRule.FONT_FACE_RULE) return r.cssText;
+    if(r.type === CSSRule.IMPORT_RULE){ dropped.push('@import ' + r.href); return ''; }
+    return r.cssText || '';
+  });
+
+  const out = walk(rules).filter(Boolean).join('\n');
+  st.remove();
+  return { css: out, dropped };
+}
+
+/* 원본을 1600×900 안에 비율 유지로 앉힘 */
+function importWrap(inner, w, h){
+  const k = Math.min(1600 / w, 900 / h);
+  return `<div class="s imported" style="padding:0;overflow:hidden;">`
+    + `<div style="position:absolute;top:50%;left:50%;width:${w}px;height:${h}px;--iw:${w}px;--ih:${h}px;`
+    + `transform:translate(-50%,-50%) scale(${k.toFixed(4)});transform-origin:center center;">`
+    + inner + `</div></div>`;
+}
+
+/* 메인: HTML 텍스트 + 파일명 → 덱 데이터. 다중 슬라이드가 아니면 null.
+   원본 .slide 껍데기를 보존해 자식 스타일이 살아남게 하되, class 토큰만
+   'impslide'로 바꿔 엔진의 querySelectorAll('.slide')와 충돌하지 않게 합니다. */
+function importHTML(htmlText, filename){
+  const doc = new DOMParser().parseFromString(htmlText, 'text/html');
+
+  const cdn = [...doc.querySelectorAll('link[rel=stylesheet][href^="http"], script[src^="http"]')].map(e => e.href || e.src);
+  doc.querySelectorAll('link[rel=stylesheet][href^="http"], script[src^="http"]').forEach(e => e.remove());
+
+  const css = [...doc.querySelectorAll('style')].map(s => s.textContent).join('\n');
+  const { sel, els } = importFindSlides(doc);
+  if(els.length < 2) return null;
+
+  const size = importGuessSize(css);
+  const scoped = importScopeCSS(css, '.imported');
+  els.forEach(e => e.classList.replace('slide', 'impslide'));
+  const scopedCss = scoped.css.replace(/\.slide(?![\w-])/g, '.impslide')
+    + '\n/* 임포트: 원본 슬라이드 컨테이너를 보이게 — display 외에 opacity/visibility 로 숨기고 .active 에만 켜는 덱도 있음 */\n.imported .impslide,.imported>div>*{display:block !important;opacity:1 !important;visibility:visible !important;}';
+
+  const id = (filename || 'imported').replace(/\.html?$/i, '').replace(/[^a-zA-Z0-9가-힣-]+/g, '-').toLowerCase().slice(0, 40);
+
+  return {
+    id, title: doc.title || id, css: scopedCss,
+    els: els.map(e => e.outerHTML.trim()),   // 소비자가 크기 조절해 importWrap 가능
+    sel, size, cdn, dropped: scoped.dropped
+  };
+}
+
+let DECKS = [
+ {
+  "id": "deck-system-demo",
+  "title": "Deck System — a presentation engine that lives in one HTML file",
+  "n": 9,
+  "cover": {
+   "layout": "title",
+   "anim": "fade",
+   "title": "Deck System",
+   "sub": "Data-driven slides → one self-contained HTML file<br>with presenter view, ink, and a built-in editor",
+   "meta": "Jihwan Oh · Sungkyunkwan University<br>Built for lectures and conference talks — no PowerPoint, no internet required",
+   "notes": "This is a live demo. Press P for the presenter window, D to draw, ? for all shortcuts.\n⏰ Try the arrow keys first."
+  },
+  "mtime": 1787225141383.7324
+ }
+];
+let DIR = null;                    // 연결된 폴더 (FileSystemDirectoryHandle)
+
+const $ = id => document.getElementById(id);
+const say = (t, warn) => { $('msg').innerHTML = t; $('msg').className = 'msg' + (warn ? ' warn' : ''); };
+
+const SORTS = {
+  new:  (a, b) => (b.mtime || 0) - (a.mtime || 0) || a.id.localeCompare(b.id),
+  old:  (a, b) => (a.mtime || 0) - (b.mtime || 0) || a.id.localeCompare(b.id),
+  name: (a, b) => a.id.localeCompare(b.id, 'ko'),
+};
+const fmtDate = t => { if(!t) return ''; const d = new Date(t), z = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())} ${z(d.getHours())}:${z(d.getMinutes())}`; };
+function paint(){
+  const mode = SORTS[$('sort').value] ? $('sort').value : 'new';
+  $('g').innerHTML = [...DECKS].sort(SORTS[mode]).map(d => `
+    <div class="card">
+      <button class="rm" data-id="${d.id}" title="삭제">삭제</button>
+      <a href="./${d.id}.html">
+        <div class="pv"><div class="pvi">${slideHTML(d.cover)}</div></div>
+        <div class="meta"><div class="t">${d.title}</div><div class="d">${d.n}장 · ${d.id}.html${d.mtime ? ' · ' + fmtDate(d.mtime) : ''}</div></div>
+      </a>
+    </div>`).join('');
+  $('sub').textContent = DECKS.length + '개 덱 · ' + DECKS.reduce((a,d)=>a+d.n,0) + '장'
+    + (DIR ? ' · 폴더 연결됨' : '');
+  fit();
+  $('g').querySelectorAll('.rm').forEach(b => b.onclick = () => remove(b.dataset.id));
+}
+function fit(){ document.querySelectorAll('.pv').forEach(pv =>
+  pv.querySelector('.pvi').style.transform = 'scale(' + (pv.clientWidth / 1600) + ')'); }
+addEventListener('resize', fit);
+
+/* ── 폴더 연결 ── */
+const fileAt = async (dir, ...p) => {
+  let h = dir;
+  for(let i = 0; i < p.length - 1; i++) h = await h.getDirectoryHandle(p[i]);
+  return (await h.getFileHandle(p[p.length-1])).getFile();
+};
+const readFile = async (dir, ...p) => (await fileAt(dir, ...p)).text();
+const writeFile = async (dir, sub, name, text) => {
+  const h = await dir.getDirectoryHandle(sub, { create: true });
+  const w = await (await h.getFileHandle(name, { create: true })).createWritable();
+  await w.write(text); await w.close();
+};
+
+let SRC = null, ASM = null, SHELL = null;
+
+async function connect(){
+  if(!window.showDirectoryPicker)
+    return say('이 브라우저는 폴더 접근을 지원하지 않습니다. 크롬/엣지에서 열거나 <code>node build.mjs</code>를 쓰세요.', true);
+  let dir;
+  try{ dir = await showDirectoryPicker({ mode:'readwrite', id:'deck-system' }); }
+  catch(e){ return; }                     // 사용자가 취소
+  try{
+    SRC = {
+      engine:  await readFile(dir, 'engine', 'presenter-mode.html'),
+      theme:   await readFile(dir, 'theme', 'academic.css'),
+      layouts: await readFile(dir, 'src', 'layouts.js'),
+      render:  await readFile(dir, 'src', 'render.js'),
+      editor:  await readFile(dir, 'src', 'editor.js'),
+    };
+    ASM = new Function(await readFile(dir, 'src', 'assemble.js')
+      + '\nreturn { makeShell: makeShell, readDeck: readDeck, buildDeck: buildDeck };')();
+  }catch(e){
+    return say('<b>이 폴더가 아닌 것 같아요.</b> deck-system 루트(engine/ theme/ src/ decks/ 가 있는 곳)를 고르세요.', true);
+  }
+  DIR = dir;
+  document.body.classList.add('live');
+  $('new').disabled = $('rebuild').disabled = $('imp').disabled = false;
+  $('connect').textContent = '폴더 바꾸기';
+  await rescan();
+}
+
+async function decksIn(dir){
+  const out = [];
+  const h = await dir.getDirectoryHandle('decks');
+  for await (const e of h.values()) if(e.kind === 'file' && e.name.endsWith('.js')) out.push(e.name);
+  return out.sort();
+}
+
+async function rescan(){
+  const names = await decksIn(DIR);
+  const next = [];
+  for(const f of names){
+    const id = f.replace(/\.js$/, '');
+    try{
+      const file = await fileAt(DIR, 'decks', f);
+      const d = ASM.readDeck(await file.text(), id);
+      next.push({ id, title: d.DECK.title || id, n: d.SLIDES.length, cover: d.SLIDES[0], mtime: file.lastModified });
+    }catch(e){ console.warn(e.message); }
+  }
+  DECKS = next; paint();
+  say('<b>연결됨</b> — 덱 ' + DECKS.length + '개를 읽었습니다. <b>기존 HTML 발표자료를 이 페이지에 끌어놓으면</b> 바로 덱으로 가져옵니다. 고치고 [다시 빌드]를 누르면 <code>dist/</code>가 갱신됩니다.');
+}
+
+async function rebuild(){
+  $('rebuild').disabled = true; $('rebuild').textContent = '빌드 중…';
+  try{
+    SHELL = ASM.makeShell(SRC);
+    const names = await decksIn(DIR);
+    let n = 0;
+    for(const f of names){
+      const id = f.replace(/\.js$/, '');
+      const code = await readFile(DIR, 'decks', f);
+      const d = ASM.readDeck(code, id);
+      await writeFile(DIR, 'dist', id + '.html', ASM.buildDeck(SHELL, code, d.DECK));
+      n++;
+    }
+    await rescan();
+    say('<b>' + n + '개 덱을 다시 빌드했습니다.</b> 색인은 <code>node build.mjs</code>로 갱신하세요 — 이 페이지가 그 색인이라 자기 자신은 못 덮어씁니다.');
+  }catch(e){ say('<b>빌드 실패</b> — ' + e.message, true); }
+  $('rebuild').textContent = '다시 빌드'; $('rebuild').disabled = false;
+}
+
+async function make(){
+  const id = (prompt('덱 id (파일명이 됩니다. 영문·숫자·하이픈)') || '').trim().toLowerCase();
+  if(!id) return;
+  if(!/^[a-z0-9-]+$/.test(id)) return say('id는 영문 소문자·숫자·하이픈만 됩니다.', true);
+  if(DECKS.some(d => d.id === id)) return say('<b>' + id + '</b>는 이미 있습니다.', true);
+  const title = (prompt('덱 제목') || id).trim();
+  const code = '/* 슬라이드 데이터 — [\u270e 편집]으로 고치거나 이 배열을 직접 고치세요 */\n'
+    + 'const DECK = ' + JSON.stringify({ id, title }, null, 2) + ';\n\n'
+    + 'const SLIDES = ' + JSON.stringify([
+        { layout:'title', title, sub:'', meta:'', notes:'' },
+        { layout:'bullets', eyebrow:'', title:'첫 슬라이드', items:'첫 번째 항목', notes:'' }
+      ], null, 2) + ';\n';
+  await writeFile(DIR, 'decks', id + '.js', code);
+  await rebuild();
+  location.href = './' + id + '.html';
+}
+
+async function remove(id){
+  if(!DIR) return say('덱을 삭제하려면 먼저 <b>[폴더 연결]</b>로 deck-system 폴더를 연결하세요 — 파일을 지우려면 폴더 접근이 필요합니다.', true);
+  if(!confirm(id + ' 덱을 지울까요?\n\ndecks/' + id + '.js 와 dist/' + id + '.html 이 삭제됩니다. 되돌릴 수 없어요 (git에 커밋해 뒀다면 거기서 복구 가능).')) return;
+  try{
+    (await DIR.getDirectoryHandle('decks')).removeEntry(id + '.js');
+    try{ (await DIR.getDirectoryHandle('dist')).removeEntry(id + '.html'); }catch(e){}
+    await rescan();
+  }catch(e){ say('삭제 실패 — ' + e.message, true); }
+}
+
+/* ── HTML 덱 끌어놓기 → 변환 + decks/ 저장 + 재빌드 (src/import.js 공용 로직) ── */
+const hasFiles = e => e.dataTransfer && [...(e.dataTransfer.types || [])].includes('Files');
+let dragN = 0;
+addEventListener('dragover', e => { if(hasFiles(e)) e.preventDefault(); });
+addEventListener('dragenter', e => { if(hasFiles(e)){ e.preventDefault(); dragN++; document.body.classList.add('dropping'); } });
+addEventListener('dragleave', e => { if(hasFiles(e) && --dragN <= 0) document.body.classList.remove('dropping'); });
+addEventListener('drop', e => {
+  if(!hasFiles(e)) return;
+  e.preventDefault(); dragN = 0; document.body.classList.remove('dropping');
+  importFiles(e.dataTransfer.files);
+});
+/* 여러 파일을 한 번에 — 드롭이든 [HTML 가져오기] 피커든 같은 길 */
+async function importFiles(list){
+  const files = [...list].filter(f => /\.html?$/i.test(f.name));
+  if(!files.length) return;
+  if(!DIR) return say('먼저 <b>[폴더 연결]</b>로 deck-system 폴더를 연결하세요 — 그래야 가져온 덱을 <code>decks/</code>에 바로 저장합니다.', true);
+  const ok = [], skip = [];
+  let i = 0;
+  for(const f of files){
+    say('<b>' + (++i) + ' / ' + files.length + '</b> 변환 중… ' + f.name);
+    let data;
+    try{ data = importHTML(await f.text(), f.name); }catch(err){ skip.push(f.name); continue; }
+    if(!data){ skip.push(f.name); continue; }
+    let id = data.id;
+    const taken = x => DECKS.some(d => d.id === x) || ok.includes(x);
+    if(taken(id)){ let k = 2; while(taken(id + '-' + k)) k++; id = id + '-' + k; }
+    const slides = data.els.map(inner => ({ layout: 'html', html: importWrap(inner, data.size.w, data.size.h), notes: '' }));
+    const code = '/* ' + (data.title || id) + ' — 임포트됨 (' + f.name + ') */\n'
+      + 'const DECK = ' + JSON.stringify({ id, title: data.title, css: data.css }, null, 2) + ';\n\n'
+      + 'const SLIDES = ' + JSON.stringify(slides, null, 2) + ';\n';
+    try{ await writeFile(DIR, 'decks', id + '.js', code); ok.push(id); }
+    catch(err){ skip.push(f.name); }
+  }
+  if(ok.length) await rebuild();
+  say('<b>' + ok.length + '개 덱을 가져왔습니다.</b>' + (ok.length ? ' (' + ok.join(', ') + ')' : '')
+    + (skip.length ? '<br>건너뜀(다중 슬라이드 아님): ' + skip.join(', ') : ''));
+}
+
+$('connect').onclick = connect;
+$('sort').value = localStorage.getItem('studio.sort') || 'new';
+$('sort').onchange = () => { localStorage.setItem('studio.sort', $('sort').value); paint(); };
+$('imp').onclick = () => $('impPick').click();
+$('impPick').onchange = async e => { await importFiles(e.target.files); e.target.value = ''; };
+$('rebuild').onclick = rebuild;
+$('new').onclick = make;
+paint();
+</script>
+</body></html>
