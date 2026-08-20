@@ -713,7 +713,7 @@ const SLIDES = [
   layout:'title', anim:'fade',
   title:'Deck System',
   sub:'Data-driven slides → one self-contained HTML file<br>with presenter view, ink, and a built-in editor',
-  meta:'Jihwan Oh · Sungkyunkwan University<br>Built for lectures and conference talks — no PowerPoint, no internet required',
+  meta:'Jihwan Oh · Sungkyunkwan University<br>Built on the open-source <b>presenter-mode</b> engine by DAYFOCUS LAB (MIT) — layouts, editor, importer and build system added on top',
   notes:'This is a live demo. Press P for the presenter window, D to draw, ? for all shortcuts.\n⏰ Try the arrow keys first.'
 },
 {
@@ -762,7 +762,7 @@ const SLIDES = [
   layout:'two', anim:'fade',
   title:'Under the hood',
   leftHead:'Architecture',
-  left:'<b>decks/*.js</b> — slide data<br><b>src/layouts.js</b> — 8 layouts, one render path for show · edit · thumbnails<br><b>engine/</b> — upstream presenter engine (MIT), never modified<br><b>theme/</b> — design tokens and motion<br><br><b>node build.mjs</b> → dist/*.html',
+  left:'<b>decks/*.js</b> — slide data<br><b>src/layouts.js</b> — 8 layouts, one render path for show · edit · thumbnails<br><b>engine/</b> — <b>presenter-mode</b> by DAYFOCUS LAB (jinnyjiinlee, MIT) — used as-is, never modified<br><b>theme/</b> — design tokens and motion<br><br><b>node build.mjs</b> → dist/*.html',
   rightHead:'Design rules',
   right:'Zero external resources — no CDN fonts, no libraries<br>Fixed 1600×900 canvas, scaled to any screen<br>Every state change goes through one undo stack<br>The build fails loudly if the engine\'s insertion points move<br><br>~2,000 lines of vanilla JS, no framework',
   notes:''
@@ -770,11 +770,11 @@ const SLIDES = [
 {
   layout:'quote', anim:'zoom',
   quote:'The best presentation tool is the one that disappears — the talk is what remains.',
-  cite:'Design note, deck-system README',
+  cite:'Design note, deck-system README · Presenter engine: presenter-mode © DAYFOCUS LAB, MIT — github.com/jinnyjiinlee/presenter-mode',
   notes:'Close. Thank the audience, point to the GitHub profile for the source.'
 }
 ];
-DECK.built = '1qjxao1';
+DECK.built = 'mbrh9w';
 </script>
 <script id="deckRender">
 /* ══════════════════════════════════════════════════════════════
