@@ -689,7 +689,7 @@
       Jihwan<br><em>Oh</em>
     </h1>
     <p class="hero-tagline">
-      Bridging technical logic with public administration. Specializing in AI governance, sociotechnical systems, and evidence-based policy design — building tools to make social science research smarter.
+      Bridging technical logic with public administration. Specializing in AI governance, sociotechnical systems, and disaster resilience — building tools that lower the administrative burden citizens face.
     </p>
     <div class="hero-tags">
       <span class="tag">Disaster &amp; Crisis Management</span>
@@ -925,7 +925,7 @@
   </div>
   <div class="contact-wrap">
     <p class="contact-lead reveal">
-      Always open to conversations on <span>risk governance</span>, sociotechnical systems, and evidence-based policy — or anything that treats social complexity with the rigor it deserves.
+      Always open to conversations on <span>risk governance</span>, sociotechnical systems, and disaster resilience — or anything that treats social complexity with the rigor it deserves.
     </p>
     <div class="contact-links reveal reveal-delay-1">
       <a href="mailto:ojh121523@skku.edu"><span class="ci-label">Email</span> ojh121523@skku.edu</a>
@@ -995,8 +995,18 @@ const nodes = [
   { id: 'Nuclear Energy Policy', group: 'policy', r: 15 },
   { id: 'Public Conflict', group: 'policy', r: 14 },
   { id: 'Social Capital', group: 'core', r: 13 },
-  { id: 'Evidence-based Policy', group: 'method', r: 15 },
   { id: 'Policy Acceptability', group: 'policy', r: 14 },
+  // ── concepts grounded in current projects ──
+  { id: 'Administrative Burden', group: 'core', r: 18 },
+  { id: 'Disaster Recovery', group: 'core', r: 17 },
+  { id: 'Community Resilience', group: 'core', r: 16 },
+  { id: 'Public Data Infrastructure', group: 'policy', r: 15 },
+  { id: 'Quantitative Methods', group: 'method', r: 18 },
+  { id: 'Longitudinal Analysis', group: 'method', r: 16 },
+  { id: 'Risk Modeling', group: 'method', r: 15 },
+  { id: 'Spatial Analysis', group: 'method', r: 16 },
+  { id: 'Qualitative Fieldwork', group: 'method', r: 15 },
+  { id: 'Document AI', group: 'emerging', r: 14 },
 ];
 
 const links = [
@@ -1010,11 +1020,11 @@ const links = [
   // science & technology policy cluster
   { source: 'Science & Technology Policy', target: 'Nuclear Energy Policy' },
   { source: 'Science & Technology Policy', target: 'AI Technology' },
-  { source: 'Science & Technology Policy', target: 'Evidence-based Policy' },
+  { source: 'Science & Technology Policy', target: 'Public Data Infrastructure' },
   { source: 'Science & Technology Policy', target: 'Risk Perception' },
   // government innovation / participation cluster
   { source: 'Government Innovation', target: 'Citizen Participation' },
-  { source: 'Government Innovation', target: 'Evidence-based Policy' },
+  { source: 'Government Innovation', target: 'Administrative Burden' },
   { source: 'Government Innovation', target: 'Administrative Ethics' },
   { source: 'Citizen Participation', target: 'Public Conflict' },
   { source: 'Citizen Participation', target: 'Social Capital' },
@@ -1031,6 +1041,31 @@ const links = [
   { source: 'Risk Perception', target: 'Policy Acceptability' },
   { source: 'Sociotechnical Systems', target: 'Normal Accident Theory' },
   { source: 'Public Conflict', target: 'Social Capital' },
+  // ── ties from current projects ──
+  { source: 'Administrative Burden', target: 'Disaster Management' },
+  { source: 'Administrative Burden', target: 'Citizen Participation' },
+  { source: 'Administrative Burden', target: 'Public Data Infrastructure' },
+  { source: 'Disaster Recovery', target: 'Disaster Management' },
+  { source: 'Disaster Recovery', target: 'Community Resilience' },
+  { source: 'Disaster Recovery', target: 'Social Capital' },
+  { source: 'Community Resilience', target: 'Citizen Participation' },
+  { source: 'Community Resilience', target: 'Qualitative Fieldwork' },
+  { source: 'Public Data Infrastructure', target: 'Government Innovation' },
+  { source: 'Spatial Analysis', target: 'Disaster Management' },
+  { source: 'Spatial Analysis', target: 'Public Data Infrastructure' },
+  { source: 'Spatial Analysis', target: 'Risk Perception' },
+  { source: 'Qualitative Fieldwork', target: 'Social Capital' },
+  { source: 'Document AI', target: 'AI Technology' },
+  { source: 'Document AI', target: 'Qualitative Fieldwork' },
+  // ── quantitative methods ──
+  { source: 'Quantitative Methods', target: 'Longitudinal Analysis' },
+  { source: 'Quantitative Methods', target: 'Risk Modeling' },
+  { source: 'Quantitative Methods', target: 'Spatial Analysis' },
+  { source: 'Quantitative Methods', target: 'Qualitative Fieldwork' },
+  { source: 'Longitudinal Analysis', target: 'Disaster Recovery' },
+  { source: 'Longitudinal Analysis', target: 'Social Capital' },
+  { source: 'Risk Modeling', target: 'Risk Perception' },
+  { source: 'Risk Modeling', target: 'Disaster Management' },
 ];
 
 const colorMap = {
