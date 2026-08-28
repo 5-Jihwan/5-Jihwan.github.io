@@ -406,13 +406,19 @@
 
     /* ── TIMELINE ── */
     .timeline { position: relative; padding-left: 2.5rem; }
-    .timeline::before {
+    /* 레일은 통짜가 아니라 점과 점을 잇는 구간선이다 — 항목 높이가 달라도
+       마지막 점에서 정확히 끝나고, 꼬리가 남지 않는다.
+       색은 중립으로 두고 강조는 점(accent/gold)이 맡는다. */
+    .tl-item::after {
       content: '';
       position: absolute;
-      left: 0; top: 0; bottom: 0;
+      left: calc(-2.5rem - .5px);          /* 점과 같은 중심축 */
+      top: calc(.45rem + 10px);            /* 이 점의 아래 끝 */
+      bottom: calc(-2.5rem - .45rem);      /* 다음 점의 위 끝 */
       width: 1px;
-      background: linear-gradient(to bottom, var(--accent), var(--gold), transparent);
+      background: rgba(86,101,119,.28);
     }
+    .tl-item:last-child::after { display: none; }
     .tl-item {
       position: relative;
       margin-bottom: 2.5rem;
@@ -421,7 +427,7 @@
     .tl-item::before {
       content: '';
       position: absolute;
-      left: -2.55rem;
+      left: calc(-2.5rem - 5px);     /* 지름 10px의 중심(left+5px)을 연결선 중심(-2.5rem)에 정렬 */
       top: .45rem;
       width: 10px; height: 10px;
       border-radius: 50%;
@@ -430,6 +436,7 @@
       transition: background .25s, border-color .25s;
       z-index: 1;
     }
+    .tl-item:last-child { margin-bottom: 0; }
     .tl-item:hover::before { background: var(--accent); }
     .tl-item.gold::before { border-color: var(--gold); }
     .tl-item.gold:hover::before { background: var(--gold); }
