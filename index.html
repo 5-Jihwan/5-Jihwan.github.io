@@ -1173,28 +1173,58 @@ function buildNetwork() {
   const stretch = Math.max(1, Math.min(2.2, W * .42 / (R * 1.83)));   // 1.83 = scale of the nearest node
   nodes.forEach(n => { n.p = n.p.map(v => v * fit); });
 
-  const link = svg.append('g').selectAll('line').data(L).enter().append('line');
-  const node = svg.append('g').selectAll('g').data(nodes).enter().append('g').style('cursor', 'grab');
-  // shaded spheres: one lit gradient per group, over an opaque backing so near nodes hide far ones
-  const defs = svg.insert('defs', ':first-child');
-  Object.entries(colorMap).forEach(([g, c]) => {
-    const gr = defs.append('radialGradient').attr('id', 'ball-' + g).attr('cx', '35%').attr('cy', '30%').attr('r', '75%');
-    gr.append('stop').attr('offset', '0%').attr('stop-color', d3.interpolateRgb(c, '#fff')(.75));
-    gr.append('stop').attr('offset', '55%').attr('stop-color', c);
-    gr.append('stop').attr('offset', '100%').attr('stop-color', d3.interpolateRgb(c, '#000')(.45));
+  // deterministic pseudo-random, so the neuron shapes are the same on every visit
+  const rnd = i => { const v = Math.sin(i * 12.9898) * 43758.5453; return v - Math.floor(v); };
+  const vec = i => [rnd(i) - .5, rnd(i + .3) - .5, rnd(i + .7) - .5];
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // axons: each link bends through a control point pushed off its midpoint
+  L.forEach((l, i) => {
+    const d = Math.hypot(...l.s.p.map((v, k) => v - l.t.p[k]));
+    l.c = l.s.p.map((v, k) => (v + l.t.p[k]) / 2 + vec(i + 1)[k] * d * .5);
   });
-  node.append('circle').attr('class', 'back').attr('fill', '#f7f9fc');
+  // dendrites: short loose branches around each cell body
+  const D = [];
+  nodes.forEach((n, i) => { for (let j = 0; j < 4; j++) {
+    const v = vec(i * 7 + j + 50), m = Math.hypot(...v) || 1, len = n.r * ns * (1.8 + rnd(i * 5 + j) * 1.4);
+    const bend = vec(i * 3 + j + 9);
+    D.push({ n, tip: n.p.map((p, k) => p + v[k] / m * len),
+             mid: n.p.map((p, k) => p + v[k] / m * len * .5 + bend[k] * len * .5) });
+  }});
+  // signals travelling along the axons
+  const P = still ? [] : d3.range(Math.ceil(L.length / 3)).map(i => (
+    { l: L[i * 3 % L.length], t: rnd(i), v: .006 + rnd(i + 2) * .006, fwd: i % 2 === 0 }));
+
+  // cell bodies: lit sphere gradient + soft halo gradient per group
+  const defs = svg.append('defs');
+  Object.entries(colorMap).forEach(([g, c]) => {
+    const ball = defs.append('radialGradient').attr('id', 'ball-' + g).attr('cx', '35%').attr('cy', '30%').attr('r', '75%');
+    ball.append('stop').attr('offset', '0%').attr('stop-color', d3.interpolateRgb(c, '#fff')(.75));
+    ball.append('stop').attr('offset', '55%').attr('stop-color', c);
+    ball.append('stop').attr('offset', '100%').attr('stop-color', d3.interpolateRgb(c, '#000')(.45));
+    const halo = defs.append('radialGradient').attr('id', 'halo-' + g);
+    halo.append('stop').attr('offset', '30%').attr('stop-color', c).attr('stop-opacity', .5);
+    halo.append('stop').attr('offset', '100%').attr('stop-color', c).attr('stop-opacity', 0);
+  });
+
+  const line = g => g.attr('fill', 'none').attr('stroke-linecap', 'round');
+  const dend = line(svg.append('g').selectAll('path').data(D).enter().append('path'))
+    .attr('stroke', d => colorMap[d.n.group]);
+  const link = line(svg.append('g').selectAll('path').data(L).enter().append('path'));
+  const pulse = svg.append('g').selectAll('circle').data(P).enter().append('circle').style('pointer-events', 'none');
+  const node = svg.append('g').selectAll('g').data(nodes).enter().append('g').style('cursor', 'grab');
+  node.append('circle').attr('class', 'halo').attr('fill', d => 'url(#halo-' + d.group + ')').style('pointer-events', 'none');
+  node.append('circle').attr('class', 'back').attr('fill', '#f7f9fc');   // opaque, so near cells hide far ones
   node.append('circle').attr('class', 'ball').attr('fill', d => 'url(#ball-' + d.group + ')');
   node.append('text').attr('class', 'node-label').attr('fill', '#566577').text(d => d.id);
 
   let yaw = .4, pitch = -.25, hot = null, drag = null;
-  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
   node.on('mouseover', (e, d) => { hot = d; }).on('mouseout', () => { hot = null; });
 
   const el = svg.node();
   el.style.touchAction = 'pan-y';   // vertical swipes still scroll the page
   el.style.userSelect = el.style.webkitUserSelect = 'none';   // dragging must not select labels
-  el.addEventListener('pointerdown', e => { drag =[e.clientX, e.clientY]; el.setPointerCapture(e.pointerId); });
+  el.addEventListener('pointerdown', e => { drag = [e.clientX, e.clientY]; el.setPointerCapture(e.pointerId); });
   el.addEventListener('pointermove', e => {
     if (!drag) return;
     yaw += (e.clientX - drag[0]) * .008;
@@ -1206,28 +1236,55 @@ function buildNetwork() {
   return function draw() {
     if (!drag && !hot && !still) yaw += .0025;
     const cy = Math.cos(yaw), sy = Math.sin(yaw), cx = Math.cos(pitch), sx = Math.sin(pitch);
-    nodes.forEach(n => {
-      const [x, y, z] = n.p;
+    const proj = ([x, y, z]) => {
       const x1 = x * cy + z * sy, z1 = z * cy - x * sy;
-      const y1 = y * cx - z1 * sx, z2 = z1 * cx + y * sx;
-      n.k = F / (F - z2);                              // perspective scale
-      n.sx = W / 2 + x1 * n.k * stretch; n.sy = H / 2 + y1 * n.k;
-      n.z = z2;
-      n.o = .35 + .65 * (z2 + R) / (2 * R);              // far nodes fade
+      const y1 = y * cx - z1 * sx, z2 = z1 * cx + y * sx, k = F / (F - z2);   // k = perspective scale
+      return [W / 2 + x1 * k * stretch, H / 2 + y1 * k, k, z2];
+    };
+    nodes.forEach(n => {
+      [n.sx, n.sy, n.k, n.z] = proj(n.p);
+      n.o = .35 + .65 * (n.z + R) / (2 * R);           // far cells wash out
+      n.fire = (n.fire || 0) * .93;                    // glow from the last signal fades
     });
     const on = n => !hot || hot.nb.has(n.id);
     const lit = l => hot && (l.s === hot || l.t === hot);
-    link.attr('x1', l => l.s.sx).attr('y1', l => l.s.sy).attr('x2', l => l.t.sx).attr('y2', l => l.t.sy)
-      .attr('stroke', l => lit(l) ? colorMap[hot.group] : 'rgba(26,95,196,.22)')
-      .attr('stroke-width', l => lit(l) ? 2 : 1.2)
+    const curve = (a, c, b) => `M${a[0]},${a[1]}Q${c[0]},${c[1]} ${b[0]},${b[1]}`;
+
+    dend.attr('d', d => curve([d.n.sx, d.n.sy], proj(d.mid), proj(d.tip)))
+      .attr('stroke-width', d => 1.3 * d.n.k)
+      .attr('opacity', d => on(d.n) ? (hot ? .6 : d.n.o * .45) : .05);
+    link.each(l => { l.cp = proj(l.c); })
+      .attr('d', l => curve([l.s.sx, l.s.sy], l.cp, [l.t.sx, l.t.sy]))
+      .attr('stroke', l => lit(l) ? colorMap[hot.group] : 'rgba(26,95,196,.3)')
+      .attr('stroke-width', l => (lit(l) ? 2 : 1.1) * (l.s.k + l.t.k) / 2)
       .attr('opacity', l => hot ? (lit(l) ? 1 : .05) : (l.s.o + l.t.o) / 2);
-    node.sort((a, b) => a.z - b.z)                     // near nodes paint last
+
+    P.forEach(p => {
+      p.t += p.v;
+      if (p.t < 1) return;
+      (p.fwd ? p.l.t : p.l.s).fire = 1;                // the receiving cell lights up
+      const mine = hot ? L.filter(l => l.s === hot || l.t === hot) : [];
+      const pool = mine.length ? mine : L;
+      p.l = pool[Math.floor(Math.random() * pool.length)]; p.t = 0;
+      p.fwd = mine.length ? p.l.s === hot : Math.random() < .5;   // on hover, signals leave the hovered cell
+    });
+    pulse.each(p => {
+      const u = p.fwd ? p.t : 1 - p.t, a = (1 - u) * (1 - u), b = 2 * u * (1 - u), c = u * u, l = p.l;
+      p.x = a * l.s.sx + b * l.cp[0] + c * l.t.sx; p.y = a * l.s.sy + b * l.cp[1] + c * l.t.sy;
+    }).attr('cx', p => p.x).attr('cy', p => p.y)
+      .attr('r', p => 2.6 * p.l.cp[2])
+      .attr('fill', p => colorMap[(p.fwd ? p.l.s : p.l.t).group])
+      .attr('opacity', p => hot && !lit(p.l) ? .05 : Math.sin(Math.PI * p.t) * .9 + .1);
+
+    node.sort((a, b) => a.z - b.z)                     // near cells paint last
       .attr('transform', n => `translate(${n.sx},${n.sy})`)
       .attr('opacity', n => on(n) ? 1 : .1);
-    node.selectAll('circle').attr('r', n => n.r * n.k * ns);
-    node.select('.ball').attr('opacity', n => hot ? 1 : n.o);   // far spheres wash out, but stay opaque
-    node.select('text').attr('opacity', n => hot ? 1 : n.o);
-    node.select('text').attr('dy', n => n.r * n.k * ns + 13).attr('font-size', n => (10 * n.k).toFixed(1) + 'px');
+    node.selectAll('.back, .ball').attr('r', n => n.r * n.k * ns);
+    node.select('.halo').attr('r', n => n.r * n.k * ns * (2 + n.fire * .9))
+      .attr('opacity', n => (.4 + n.fire * .6) * (hot ? 1 : n.o));
+    node.select('.ball').attr('opacity', n => hot ? 1 : n.o);
+    node.select('text').attr('opacity', n => hot ? 1 : n.o)
+      .attr('dy', n => n.r * n.k * ns + 13).attr('font-size', n => (10 * n.k).toFixed(1) + 'px');
   };
 }
 
