@@ -953,7 +953,7 @@
     <h2 class="section-title">Research Keywords</h2>
     <div class="section-line"></div>
   </div>
-  <p class="network-hint">// drag nodes · hover to highlight connections</p>
+  <p class="network-hint">// drag to rotate · hover to highlight connections</p>
   <div id="network-wrap"><svg id="network-svg"></svg></div>
   <div class="network-legend">
     <div class="legend-item"><div class="legend-dot" style="background:#1a5fc4"></div>Core Theory</div>
@@ -1122,76 +1122,103 @@ const colorMap = {
   emerging: '#c2447e'
 };
 
-let netInited = false;
+let netInited = false, netDraw = null, netRAF = null;
 function initNetwork() {
-  if (netInited) return;
-  netInited = true;
+  if (!netInited) { netInited = true; netDraw = buildNetwork(); }
+  if (netRAF) return;
+  const loop = () => {
+    // stop drawing once the visitor leaves the Keywords page
+    if (!document.getElementById('network-section').classList.contains('active')) { netRAF = null; return; }
+    netDraw();
+    netRAF = requestAnimationFrame(loop);
+  };
+  loop();
+}
+
+function buildNetwork() {
   const wrap = document.getElementById('network-wrap');
   const W = wrap.clientWidth, H = wrap.clientHeight;
-  const svg = d3.select('#network-svg')
-    .attr('viewBox', `0 0 ${W} ${H}`);
+  const svg = d3.select('#network-svg').attr('viewBox', `0 0 ${W} ${H}`);
+  const byId = new Map(nodes.map(n => [n.id, n]));
+  const L = links.map(l => ({ s: byId.get(l.source), t: byId.get(l.target) }));
+  const N = nodes.length;
 
-  svg.append('defs').append('filter').attr('id','glow')
-    .append('feGaussianBlur').attr('stdDeviation','3').attr('result','blur')
-    .select(function() { return this.parentNode; })
-    .append('feMerge').selectAll('feMergeNode')
-    .data(['blur','SourceGraphic']).enter().append('feMergeNode')
-    .attr('in', d => d);
-
-  const sim = d3.forceSimulation(nodes)
-    .force('link', d3.forceLink(links).id(d => d.id).distance(90).strength(.6))
-    .force('charge', d3.forceManyBody().strength(-280))
-    .force('center', d3.forceCenter(W/2, H/2))
-    .force('collision', d3.forceCollide(d => d.r + 18));
-
-  const link = svg.append('g').selectAll('line')
-    .data(links).enter().append('line')
-    .attr('stroke', 'rgba(26,95,196,.18)')
-    .attr('stroke-width', 1.2);
-
-  const node = svg.append('g').selectAll('g')
-    .data(nodes).enter().append('g')
-    .call(d3.drag()
-      .on('start', (e,d) => { if (!e.active) sim.alphaTarget(.3).restart(); d.fx=d.x; d.fy=d.y; })
-      .on('drag',  (e,d) => { d.fx=e.x; d.fy=e.y; })
-      .on('end',   (e,d) => { if (!e.active) sim.alphaTarget(0); d.fx=null; d.fy=null; }));
-
-  node.append('circle')
-    .attr('r', d => d.r)
-    .attr('fill', d => colorMap[d.group] + '22')
-    .attr('stroke', d => colorMap[d.group])
-    .attr('stroke-width', 1.5)
-    .style('cursor', 'grab');
-
-  node.append('text')
-    .attr('class', 'node-label')
-    .attr('dy', d => d.r + 13)
-    .text(d => d.id)
-    .attr('fill', '#566577')
-    .attr('font-size', '10px');
-
-  // Hover highlight
-  node.on('mouseover', (e, d) => {
-    const connected = new Set(links.filter(l => l.source.id===d.id || l.target.id===d.id)
-      .flatMap(l => [l.source.id, l.target.id]));
-    node.selectAll('circle').attr('opacity', n => connected.has(n.id) ? 1 : .15);
-    node.selectAll('text').attr('opacity', n => connected.has(n.id) ? 1 : .1);
-    link.attr('opacity', l => l.source.id===d.id || l.target.id===d.id ? 1 : .05)
-        .attr('stroke', l => l.source.id===d.id || l.target.id===d.id ? colorMap[d.group] : 'rgba(26,95,196,.18)')
-        .attr('stroke-width', l => l.source.id===d.id || l.target.id===d.id ? 2 : 1.2);
-  }).on('mouseout', () => {
-    node.selectAll('circle').attr('opacity', 1);
-    node.selectAll('text').attr('opacity', 1);
-    link.attr('opacity', 1).attr('stroke', 'rgba(26,95,196,.18)').attr('stroke-width', 1.2);
+  // 3D force layout, settled once up front (a few dozen nodes, so this is instant).
+  // Start on a Fibonacci sphere so the result is the same on every visit.
+  nodes.forEach((n, i) => {
+    const y = 1 - 2 * (i + .5) / N, rad = Math.sqrt(1 - y * y), a = i * 2.39996;
+    n.p = [Math.cos(a) * rad * 150, y * 150, Math.sin(a) * rad * 150];
+    n.nb = new Set([n.id]);
   });
+  L.forEach(l => { l.s.nb.add(l.t.id); l.t.nb.add(l.s.id); });
+  for (let it = 0; it < 300; it++) {
+    const cool = 1 - it / 300;
+    const mv = nodes.map(n => n.p.map(v => -v * .02));            // pull to centre
+    const push = (a, b, f) => { for (let k = 0; k < 3; k++) {
+      const d = nodes[b].p[k] - nodes[a].p[k]; mv[a][k] -= d * f; mv[b][k] += d * f; } };
+    for (let a = 0; a < N; a++) for (let b = a + 1; b < N; b++) {
+      const d2 = nodes[a].p.reduce((s, v, k) => s + (v - nodes[b].p[k]) ** 2, 0) + 1;
+      push(a, b, 4000 / (d2 * Math.sqrt(d2)));                      // repulsion
+    }
+    L.forEach(l => {
+      const a = nodes.indexOf(l.s), b = nodes.indexOf(l.t);
+      const d = Math.hypot(...l.s.p.map((v, k) => v - l.t.p[k])) || 1;
+      push(a, b, -(d - 90) * .04 / d);                              // spring
+    });
+    nodes.forEach((n, i) => { n.p = n.p.map((v, k) => v + Math.max(-20, Math.min(20, mv[i][k])) * cool); });
+  }
+  // fit the cloud to the box; the box is wide, so widen the projection too
+  const maxR = Math.max(...nodes.map(n => Math.hypot(...n.p)));
+  const R = Math.min(H * .33, W * .37), ns = W < 600 ? .7 : 1, fit = R / maxR, F = R * 3.2;
+  const stretch = Math.max(1, Math.min(2.2, W * .42 / (R * 1.45)));   // 1.45 = scale of the nearest node
+  nodes.forEach(n => { n.p = n.p.map(v => v * fit); });
 
-  sim.on('tick', () => {
-    link
-      .attr('x1', d => d.source.x).attr('y1', d => d.source.y)
-      .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
-    node.attr('transform', d => `translate(${
-      Math.max(d.r, Math.min(W-d.r, d.x))},${Math.max(d.r, Math.min(H-d.r, d.y))})`);
+  const link = svg.append('g').selectAll('line').data(L).enter().append('line');
+  const node = svg.append('g').selectAll('g').data(nodes).enter().append('g').style('cursor', 'grab');
+  node.append('circle').attr('stroke-width', 1.5)
+    .attr('fill', d => colorMap[d.group] + '22').attr('stroke', d => colorMap[d.group]);
+  node.append('text').attr('class', 'node-label').attr('fill', '#566577').text(d => d.id);
+
+  let yaw = .4, pitch = -.25, hot = null, drag = null;
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  node.on('mouseover', (e, d) => { hot = d; }).on('mouseout', () => { hot = null; });
+
+  const el = svg.node();
+  el.style.touchAction = 'pan-y';   // vertical swipes still scroll the page
+  el.style.userSelect = el.style.webkitUserSelect = 'none';   // dragging must not select labels
+  el.addEventListener('pointerdown', e => { drag =[e.clientX, e.clientY]; el.setPointerCapture(e.pointerId); });
+  el.addEventListener('pointermove', e => {
+    if (!drag) return;
+    yaw += (e.clientX - drag[0]) * .008;
+    pitch = Math.max(-1.2, Math.min(1.2, pitch + (e.clientY - drag[1]) * .008));
+    drag = [e.clientX, e.clientY];
   });
+  ['pointerup', 'pointercancel'].forEach(t => el.addEventListener(t, () => { drag = null; }));
+
+  return function draw() {
+    if (!drag && !hot && !still) yaw += .0025;
+    const cy = Math.cos(yaw), sy = Math.sin(yaw), cx = Math.cos(pitch), sx = Math.sin(pitch);
+    nodes.forEach(n => {
+      const [x, y, z] = n.p;
+      const x1 = x * cy + z * sy, z1 = z * cy - x * sy;
+      const y1 = y * cx - z1 * sx, z2 = z1 * cx + y * sx;
+      n.k = F / (F - z2);                              // perspective scale
+      n.sx = W / 2 + x1 * n.k * stretch; n.sy = H / 2 + y1 * n.k;
+      n.z = z2;
+      n.o = .3 + .7 * (z2 + R) / (2 * R);              // far nodes fade
+    });
+    const on = n => !hot || hot.nb.has(n.id);
+    const lit = l => hot && (l.s === hot || l.t === hot);
+    link.attr('x1', l => l.s.sx).attr('y1', l => l.s.sy).attr('x2', l => l.t.sx).attr('y2', l => l.t.sy)
+      .attr('stroke', l => lit(l) ? colorMap[hot.group] : 'rgba(26,95,196,.22)')
+      .attr('stroke-width', l => lit(l) ? 2 : 1.2)
+      .attr('opacity', l => hot ? (lit(l) ? 1 : .05) : (l.s.o + l.t.o) / 2);
+    node.sort((a, b) => a.z - b.z)                     // near nodes paint last
+      .attr('transform', n => `translate(${n.sx},${n.sy})`)
+      .attr('opacity', n => on(n) ? (hot ? 1 : n.o) : .1);
+    node.select('circle').attr('r', n => n.r * n.k * ns);
+    node.select('text').attr('dy', n => n.r * n.k * ns + 13).attr('font-size', n => (10 * n.k).toFixed(1) + 'px');
+  };
 }
 
 // ── PAGE ROUTER ──
