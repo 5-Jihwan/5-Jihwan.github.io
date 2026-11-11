@@ -1169,14 +1169,22 @@ function buildNetwork() {
   }
   // fit the cloud to the box; the box is wide, so widen the projection too
   const maxR = Math.max(...nodes.map(n => Math.hypot(...n.p)));
-  const R = Math.min(H * .33, W * .37), ns = W < 600 ? .7 : 1, fit = R / maxR, F = R * 3.2;
-  const stretch = Math.max(1, Math.min(2.2, W * .42 / (R * 1.45)));   // 1.45 = scale of the nearest node
+  const R = Math.min(H * .33, W * .37), ns = W < 600 ? .7 : 1, fit = R / maxR, F = R * 2.2;
+  const stretch = Math.max(1, Math.min(2.2, W * .42 / (R * 1.83)));   // 1.83 = scale of the nearest node
   nodes.forEach(n => { n.p = n.p.map(v => v * fit); });
 
   const link = svg.append('g').selectAll('line').data(L).enter().append('line');
   const node = svg.append('g').selectAll('g').data(nodes).enter().append('g').style('cursor', 'grab');
-  node.append('circle').attr('stroke-width', 1.5)
-    .attr('fill', d => colorMap[d.group] + '22').attr('stroke', d => colorMap[d.group]);
+  // shaded spheres: one lit gradient per group, over an opaque backing so near nodes hide far ones
+  const defs = svg.insert('defs', ':first-child');
+  Object.entries(colorMap).forEach(([g, c]) => {
+    const gr = defs.append('radialGradient').attr('id', 'ball-' + g).attr('cx', '35%').attr('cy', '30%').attr('r', '75%');
+    gr.append('stop').attr('offset', '0%').attr('stop-color', d3.interpolateRgb(c, '#fff')(.75));
+    gr.append('stop').attr('offset', '55%').attr('stop-color', c);
+    gr.append('stop').attr('offset', '100%').attr('stop-color', d3.interpolateRgb(c, '#000')(.45));
+  });
+  node.append('circle').attr('class', 'back').attr('fill', '#f7f9fc');
+  node.append('circle').attr('class', 'ball').attr('fill', d => 'url(#ball-' + d.group + ')');
   node.append('text').attr('class', 'node-label').attr('fill', '#566577').text(d => d.id);
 
   let yaw = .4, pitch = -.25, hot = null, drag = null;
@@ -1205,7 +1213,7 @@ function buildNetwork() {
       n.k = F / (F - z2);                              // perspective scale
       n.sx = W / 2 + x1 * n.k * stretch; n.sy = H / 2 + y1 * n.k;
       n.z = z2;
-      n.o = .3 + .7 * (z2 + R) / (2 * R);              // far nodes fade
+      n.o = .35 + .65 * (z2 + R) / (2 * R);              // far nodes fade
     });
     const on = n => !hot || hot.nb.has(n.id);
     const lit = l => hot && (l.s === hot || l.t === hot);
@@ -1215,8 +1223,10 @@ function buildNetwork() {
       .attr('opacity', l => hot ? (lit(l) ? 1 : .05) : (l.s.o + l.t.o) / 2);
     node.sort((a, b) => a.z - b.z)                     // near nodes paint last
       .attr('transform', n => `translate(${n.sx},${n.sy})`)
-      .attr('opacity', n => on(n) ? (hot ? 1 : n.o) : .1);
-    node.select('circle').attr('r', n => n.r * n.k * ns);
+      .attr('opacity', n => on(n) ? 1 : .1);
+    node.selectAll('circle').attr('r', n => n.r * n.k * ns);
+    node.select('.ball').attr('opacity', n => hot ? 1 : n.o);   // far spheres wash out, but stay opaque
+    node.select('text').attr('opacity', n => hot ? 1 : n.o);
     node.select('text').attr('dy', n => n.r * n.k * ns + 13).attr('font-size', n => (10 * n.k).toFixed(1) + 'px');
   };
 }
